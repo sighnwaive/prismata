@@ -26,6 +26,11 @@ require_path "apps/mobile/package.json"
 require_path "apps/mobile/android"
 require_path "apps/mobile/ios"
 
+# GitHub Pages website.
+require_path "apps/web/package.json"
+require_path "apps/web/index.html"
+require_path "apps/web/vite.config.ts"
+
 # Shared packages for cross-app TypeScript code.
 require_path "packages/ui/package.json"
 require_path "packages/core/package.json"

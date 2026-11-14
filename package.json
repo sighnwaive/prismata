@@ -54,6 +54,8 @@
     "db:migrate": "pnpm --dir apps/backend run migrate",
     "storybook:web": "pnpm --filter @prismata/storybook storybook",
     "storybook:web:build": "pnpm --filter @prismata/storybook build-storybook",
-    "storybook:mobile": "pnpm --filter @prismata/mobile storybook"
+    "storybook:mobile": "pnpm --filter @prismata/mobile storybook",
+    "web:dev": "pnpm --filter @prismata/web dev",
+    "web:build": "pnpm --filter @prismata/web build"
   }
 }

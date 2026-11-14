@@ -1,6 +1,6 @@
 # Prismata
 
-Minimal pnpm monorepo scaffold for an Electron desktop app, a React Native mobile app, and shared TypeScript packages.
+Prismata is a pnpm monorepo for an Electron desktop app, a React Native mobile companion, a static website, and shared TypeScript packages.
 
 ## Target runtime
 
@@ -8,6 +8,7 @@ The Electron desktop main process is Prismata's local authority. It owns embedde
 
 - `apps/desktop`: Electron app and main-process authority
 - `apps/mobile`: React Native mobile companion
+- `apps/web`: static product website, built with Vite and hosted on GitHub Pages
 - `packages/core`: shared non-UI TypeScript code
 - `packages/sync`: shared local-first sync and protocol helpers
 - `packages/ui`: shared UI-facing TypeScript exports
@@ -22,6 +23,10 @@ The target runtime has no standalone backend app, Postgres dependency, Docker-ho
 3. Run `pnpm run check:workspaces` and the applicable package checks.
 4. Start the desktop app using the workspace's Electron development command when available.
 5. For mobile development, use the generated React Native platform workflow and pair with a desktop that has LAN access explicitly enabled.
+
+### Website
+
+Run `pnpm web:dev` to preview the website locally and `pnpm web:build` to create its static production site in `apps/web/dist/`. The `Deploy website to GitHub Pages` workflow builds and publishes it when changes are pushed to `main`. In the repository's **Settings → Pages**, set the build and deployment source to **GitHub Actions** before the first deployment. Project-site paths are configured from the repository name during the production build.
 
 ### Android debug setup
 
