@@ -44,13 +44,17 @@ jobs:
         with:
           arch: x64
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @prismata/desktop test
+      - name: Test desktop package
+        run: pnpm run test
+        working-directory: apps/desktop
       - name: Validate desktop Joystick configuration
         run: |
           node -e 'if (!process.env.JOYSTICK_CLIENT_ID?.trim()) { console.error("Missing required GitHub Actions secret: JOYSTICK_CLIENT_ID"); process.exit(1); }'
         env:
           JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
-      - run: pnpm --filter @prismata/desktop run build:${{ matrix.target }}
+      - name: Build desktop package
+        run: pnpm run build:${{ matrix.target }}
+        working-directory: apps/desktop
         env:
           JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
           JOYSTICK_SCOPES: ${{ secrets.JOYSTICK_SCOPES }}
