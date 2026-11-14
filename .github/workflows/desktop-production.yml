@@ -41,7 +41,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @prismata/desktop test
       - name: Validate desktop Joystick configuration
-        run: node -e "if (!process.env.JOYSTICK_CLIENT_ID?.trim()) { console.error('Missing required GitHub Actions secret: JOYSTICK_CLIENT_ID'); process.exit(1); }"
+        run: |
+          node -e 'if (!process.env.JOYSTICK_CLIENT_ID?.trim()) { console.error("Missing required GitHub Actions secret: JOYSTICK_CLIENT_ID"); process.exit(1); }'
         env:
           JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
       - run: pnpm --filter @prismata/desktop run build:${{ matrix.target }}
