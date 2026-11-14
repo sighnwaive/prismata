@@ -44,7 +44,8 @@ test('packaged main process points tsx at the unpacked esbuild binary before reg
 });
 
 test('production workflow builds on native Windows, Linux, and macOS runners', async () => {
-  const workflow = await readFile(new URL('../../../.github/workflows/desktop-production.yml', import.meta.url), 'utf8');
+  const workflow = (await readFile(new URL('../../../.github/workflows/desktop-production.yml', import.meta.url), 'utf8'))
+    .replace(/\r\n/g, '\n');
   for (const runner of ['windows-2022', 'ubuntu-latest', 'macos-latest']) {
     assert.ok(workflow.includes(runner), `workflow includes ${runner}`);
   }
