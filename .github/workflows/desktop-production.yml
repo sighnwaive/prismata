@@ -52,6 +52,49 @@ jobs:
           node -e 'if (!process.env.JOYSTICK_CLIENT_ID?.trim()) { console.error("Missing required GitHub Actions secret: JOYSTICK_CLIENT_ID"); process.exit(1); }'
         env:
           JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
+      - name: Configure Windows code signing environment
+        if: matrix.target == 'win'
+        shell: pwsh
+        env:
+          CERTIFICATE: ${{ secrets.WIN_CSC_LINK }}
+          CERTIFICATE_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: |
+          function Add-GitHubEnvironmentVariable {
+            param([string]$Name, [string]$Value)
+            if (![string]::IsNullOrWhiteSpace($Value)) {
+              $delimiter = [guid]::NewGuid().ToString()
+              "$Name<<$delimiter" >> $env:GITHUB_ENV
+              $Value >> $env:GITHUB_ENV
+              "$delimiter" >> $env:GITHUB_ENV
+            }
+          }
+          Add-GitHubEnvironmentVariable 'WIN_CSC_LINK' $env:CERTIFICATE
+          Add-GitHubEnvironmentVariable 'WIN_CSC_KEY_PASSWORD' $env:CERTIFICATE_PASSWORD
+      - name: Configure macOS code signing environment
+        if: matrix.target == 'mac'
+        shell: bash
+        env:
+          MAC_CERTIFICATE: ${{ secrets.MAC_CSC_LINK }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          MAC_APPLE_ID: ${{ secrets.APPLE_ID }}
+          MAC_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          MAC_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          write_github_env() {
+            local name="$1" value="$2" delimiter
+            [ -n "$value" ] || return 0
+            delimiter="$(uuidgen)"
+            {
+              printf '%s<<%s\n' "$name" "$delimiter"
+              printf '%s\n' "$value"
+              printf '%s\n' "$delimiter"
+            } >> "$GITHUB_ENV"
+          }
+          write_github_env CSC_LINK "$MAC_CERTIFICATE"
+          write_github_env CSC_KEY_PASSWORD "$MAC_CERTIFICATE_PASSWORD"
+          write_github_env APPLE_ID "$MAC_APPLE_ID"
+          write_github_env APPLE_APP_SPECIFIC_PASSWORD "$MAC_APPLE_APP_SPECIFIC_PASSWORD"
+          write_github_env APPLE_TEAM_ID "$MAC_APPLE_TEAM_ID"
       - name: Build desktop package
         run: pnpm run build:${{ matrix.target }}
         working-directory: apps/desktop
@@ -61,13 +104,6 @@ jobs:
           JOYSTICK_PROFILE_ENDPOINT: ${{ secrets.JOYSTICK_PROFILE_ENDPOINT }}
           GYP_MSVS_VERSION: ${{ matrix.target == 'win' && '2022' || '' }}
           npm_config_msvs_version: ${{ matrix.target == 'win' && '2022' || '' }}
-          WIN_CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CSC_LINK || '' }}
-          WIN_CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
-          CSC_LINK: ${{ matrix.target == 'mac' && secrets.MAC_CSC_LINK || '' }}
-          CSC_KEY_PASSWORD: ${{ matrix.target == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
-          APPLE_ID: ${{ matrix.target == 'mac' && secrets.APPLE_ID || '' }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.target == 'mac' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ matrix.target == 'mac' && secrets.APPLE_TEAM_ID || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: prismata-${{ matrix.target }}

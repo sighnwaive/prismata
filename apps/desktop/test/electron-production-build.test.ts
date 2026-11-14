@@ -53,6 +53,9 @@ test('production workflow builds on native Windows, Linux, and macOS runners', a
   assert.doesNotMatch(workflow, /pnpm --filter @prismata\/desktop run build:/);
   assert.match(workflow, /ilammy\/msvc-dev-cmd@v1/);
   assert.match(workflow, /GYP_MSVS_VERSION:.*2022/);
+  assert.match(workflow, /write_github_env CSC_LINK/);
+  assert.match(workflow, /Add-GitHubEnvironmentVariable 'WIN_CSC_LINK'/);
+  assert.doesNotMatch(workflow, /CSC_LINK:.*\|\| ''/);
   assert.match(workflow, /JOYSTICK_CLIENT_ID:\s*\$\{\{ secrets\.JOYSTICK_CLIENT_ID \}\}/);
   assert.match(workflow, /JOYSTICK_SCOPES:\s*\$\{\{ secrets\.JOYSTICK_SCOPES \}\}/);
   assert.match(workflow, /JOYSTICK_PROFILE_ENDPOINT:\s*\$\{\{ secrets\.JOYSTICK_PROFILE_ENDPOINT \}\}/);
