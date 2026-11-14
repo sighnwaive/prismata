@@ -49,6 +49,10 @@ test('production workflow builds on native Windows, Linux, and macOS runners', a
   for (const runner of ['windows-2022', 'ubuntu-latest', 'macos-latest']) {
     assert.ok(workflow.includes(runner), `workflow includes ${runner}`);
   }
+  assert.match(workflow, /actions\/checkout@v5/);
+  assert.match(workflow, /pnpm\/action-setup@v6/);
+  assert.match(workflow, /actions\/setup-node@v5/);
+  assert.match(workflow, /actions\/upload-artifact@v6/);
   assert.match(workflow, /run: pnpm run build:\$\{\{ matrix\.target \}\}\n\s+working-directory: apps\/desktop/);
   assert.doesNotMatch(workflow, /pnpm --filter @prismata\/desktop run build:/);
   assert.match(workflow, /ilammy\/msvc-dev-cmd@v1/);
