@@ -1,0 +1,64 @@
+name: Desktop production builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows (NSIS installer)
+            runner: windows-latest
+            target: win
+            artifact: apps/desktop/release/*.exe
+          - platform: Linux (AppImage)
+            runner: ubuntu-latest
+            target: linux
+            artifact: apps/desktop/release/*.AppImage
+          - platform: macOS (DMG)
+            runner: macos-latest
+            target: mac
+            artifact: apps/desktop/release/*.dmg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @prismata/desktop test
+      - name: Validate desktop Joystick configuration
+        run: node -e "if (!process.env.JOYSTICK_CLIENT_ID?.trim()) { console.error('Missing required GitHub Actions secret: JOYSTICK_CLIENT_ID'); process.exit(1); }"
+        env:
+          JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
+      - run: pnpm --filter @prismata/desktop run build:${{ matrix.target }}
+        env:
+          JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
+          JOYSTICK_SCOPES: ${{ secrets.JOYSTICK_SCOPES }}
+          JOYSTICK_PROFILE_ENDPOINT: ${{ secrets.JOYSTICK_PROFILE_ENDPOINT }}
+          WIN_CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CSC_LINK || '' }}
+          WIN_CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
+          CSC_LINK: ${{ matrix.target == 'mac' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.target == 'mac' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ matrix.target == 'mac' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.target == 'mac' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.target == 'mac' && secrets.APPLE_TEAM_ID || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prismata-${{ matrix.target }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+          retention-days: 14

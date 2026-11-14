@@ -1,0 +1,11 @@
+export { appName } from '@prismata/core';
+export * from './tokens';
+export { Stack } from './components/core/Stack';
+export type { StackProps } from './components/core/Stack';
+export { Text } from './components/core/Text';
+export type { TextProps } from './components/core/Text';
+export { Surface } from './components/core/Surface';
+export type { SurfaceProps } from './components/core/Surface';
+export { Button } from './components/core/Button';
+export type { ButtonProps } from './components/core/Button';
+export { default as tamaguiConfig } from '../tamagui.config';

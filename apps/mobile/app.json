@@ -1,0 +1,14 @@
+{
+  "name": "Prismata",
+  "displayName": "Prismata",
+  "scheme": "prismata",
+  "ios": {
+    "infoPlist": {
+      "CFBundleURLTypes": [
+        {
+          "CFBundleURLSchemes": ["prismata"]
+        }
+      ]
+    }
+  }
+}

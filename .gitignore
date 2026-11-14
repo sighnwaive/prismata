@@ -1,0 +1,16 @@
+node_modules/
+
+*.prd
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+/apps/storybook/storybook-static/
+
+dist/
+apps/desktop/release/
+coverage/
+*.tsbuildinfo
+.DS_Store

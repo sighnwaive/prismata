@@ -1,0 +1,33 @@
+{
+  "name": "@prismata/mobile",
+  "private": true,
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-native start",
+    "android": "pnpm run android:prepare && react-native run-android",
+    "android:prepare": "sh scripts/ensure-debug-keystore.sh",
+    "storybook": "react-native start --projectRoot .",
+    "test": "esbuild test/desktop-discovery.test.ts test/mobile-certificate-pin.test.ts test/mobile-entrypoint.test.ts test/mobile-pairing.test.ts test/connection-request.red.test.ts test/mobile-scanner.test.ts test/mobile-url-search-params.test.ts --bundle --platform=node --format=esm --alias:react-native=./test/react-native-stub.ts --alias:react-native-vision-camera=./test/react-native-vision-camera-stub.ts --outdir=/tmp/prismata-mobile-tests-current && node --test /tmp/prismata-mobile-tests-current/desktop-discovery.test.js /tmp/prismata-mobile-tests-current/mobile-certificate-pin.test.js /tmp/prismata-mobile-tests-current/mobile-entrypoint.test.js /tmp/prismata-mobile-tests-current/mobile-pairing.test.js /tmp/prismata-mobile-tests-current/connection-request.red.test.js /tmp/prismata-mobile-tests-current/mobile-scanner.test.js /tmp/prismata-mobile-tests-current/mobile-url-search-params.test.js",
+    "typecheck": "tsc --noEmit --pretty false -p tsconfig.json",
+    "typecheck:test": "tsc --noEmit --pretty false -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.0",
+    "@prismata/core": "workspace:*",
+    "@prismata/sync": "workspace:*",
+    "@prismata/ui": "workspace:*",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-keychain": "^9.2.0",
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-vision-camera": "^4.7.3"
+  },
+  "devDependencies": {
+    "@react-native-community/cli-platform-android": "13.6.9",
+    "@react-native/gradle-plugin": "0.74.87",
+    "@react-native/metro-config": "0.74.87",
+    "@storybook/react-native": "^7.6.20",
+    "@types/react": "18.3.12"
+  }
+}

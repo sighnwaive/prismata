@@ -1,0 +1,68 @@
+{
+  "name": "@prismata/desktop",
+  "description": "Prismata desktop app",
+  "author": "Prismata",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "desktopName": "tv.prismata.desktop",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "build": "pnpm run typecheck && electron-builder",
+    "build:win": "pnpm run typecheck && electron-builder --win nsis",
+    "build:linux": "pnpm run typecheck && electron-builder --linux AppImage",
+    "build:mac": "pnpm run typecheck && electron-builder --mac dmg",
+    "typecheck": "tsc --noEmit -p tsconfig.electron.json",
+    "test": "tsx --test test/*.test.ts",
+    "dev": "dotenvx run -f ../../.env -- node electron/run-dev.mjs"
+  },
+  "dependencies": {
+    "@prismata/core": "workspace:*",
+    "@prismata/sync": "workspace:*",
+    "better-sqlite3": "^13.0.3",
+    "bonjour-service": "^1.4.4",
+    "qrcode": "^1.5.4",
+    "tsx": "^4.23.12"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/qrcode": "^1.5.6",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.18.1"
+  },
+  "build": {
+    "appId": "tv.prismata.desktop",
+    "productName": "Prismata",
+    "asar": true,
+    "afterPack": "./electron/after-pack.mjs",
+    "asarUnpack": [
+      "**/*.node",
+      "**/node_modules/@esbuild/**"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "executableName": "prismata",
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.utilities"
+    }
+  }
+}

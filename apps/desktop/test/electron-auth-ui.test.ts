@@ -1,0 +1,136 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { renderShellPage } from '../electron/shell-page';
+
+const page = renderShellPage('starting desktop shell', 'Prismata desktop');
+const mainSource = readFileSync(new URL('../electron/main.mjs', import.meta.url), 'utf8');
+const preloadSource = readFileSync(new URL('../electron/preload.mjs', import.meta.url), 'utf8');
+const joystickLogoPath = new URL('../electron/assets/joysticktv-logo-simple-dark.svg', import.meta.url);
+const joystickLogo = readFileSync(joystickLogoPath);
+
+test('desktop shell visibly renders Joystick authentication controls and states', () => {
+  assert.match(page, /<div class="shell">\s*<section class="empty-panel" aria-label="Empty panel"><div class="panel-bar"><span class="panel-viewers"[^>]*><svg[^>]*aria-hidden="true"><path[^>]*><\/path><\/svg><span id="panel-viewer-count">0<\/span><\/span><\/div><div class="empty-panel-controls"><button id="joystick-connect" class="joystick-connect-button" type="button" aria-label="Connect to Joystick" aria-pressed="false"><img class="joystick-logo" src="data:image\/svg\+xml;base64,[^"]+" alt="" aria-hidden="true" \/><span id="panel-live-indicator" class="panel-live-indicator" hidden>LIVE<\/span><\/button><\/div><p id="desktop-error" class="error" role="alert" hidden><\/p><\/section>\s*<section aria-label="Direct message">/);
+  assert.ok(page.includes(`src="data:image/svg+xml;base64,${joystickLogo.toString('base64')}"`),
+    'the Joystick button embeds the Mochi project logo for the isolated data-URL page');
+  assert.match(joystickLogo.toString('utf8'), /fill="#76E1F0"/,
+    'the embedded logo retains Mochi’s Joystick brand color');
+  assert.match(page, /\.empty-panel \{ min-height: clamp\(120px, 20vh, 220px\); padding: 0; \}/);
+  assert.match(page, /\.shell > section:first-child \{ grid-column: 1 \/ -1; \}/);
+  assert.match(page, /\.shell \{ width: min\(900px, 100%\);[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(page, /@media \(min-width: 1200px\) \{ \.shell \{ width: min\(1800px, 100%\); grid-template-columns: 900px minmax\(0, 900px\); \} \}/);
+  assert.match(page, /\.panel-bar \{ height: 60px;[^}]*justify-content: flex-end/);
+  assert.match(page, /\.joystick-connect-button \{[^}]*width: 4\.5rem; height: 4\.5rem;[^}]*border-radius: 16px; background: #111827/);
+  assert.match(page, /\.joystick-connect-button\.connected \{ background: #0c0c0c; \}/);
+  assert.match(page, /\.joystick-logo \{[^}]*filter: grayscale\(1\); transition: filter 120ms ease; \}/);
+  assert.match(page, /\.joystick-connect-button\.connected \.joystick-logo \{ filter: grayscale\(0\); \}/);
+  assert.match(page, /\.panel-live-indicator \{[^}]*color: #[\da-f]{6};/i);
+  assert.match(page, /\.panel-live-indicator\.live \{ color: #ff414e; \}/);
+  assert.match(page, /liveIndicator\.hidden = !connected/);
+  assert.match(page, /joystickStreamIsLive = status\?\.stream\?\.state === 'live'/);
+  assert.match(page, /currentAuthState === 'authenticated' && joystickStreamIsLive/);
+  assert.match(page, /http-equiv="Content-Security-Policy"/);
+  assert.match(page, /default-src 'none'/);
+  assert.match(page, /style-src 'unsafe-inline'/);
+  assert.match(page, /script-src 'unsafe-inline'/);
+  assert.doesNotMatch(page, /unsafe-eval/);
+  assert.doesNotMatch(page, /id="auth-heading"|id="auth-state"|id="auth-detail"|id="identity"|id="sign-in"|id="sign-out"/);
+  assert.match(page, /id="desktop-error"/);
+  assert.match(page, /joystick-connect.+aria-pressed="false"/);
+  assert.match(page, /signed-out/);
+  assert.match(page, /opening-browser/);
+  assert.match(page, /waiting-for-callback/);
+  assert.match(page, /authenticated/);
+  assert.match(page, /failure/);
+  assert.match(page, /offline/);
+  assert.match(page, /Retry/);
+  assert.match(page, /Cancel/);
+  assert.match(page, /LAN status/);
+  assert.match(page, /Mobile access/);
+  assert.match(page, /<section aria-labelledby="mobile-heading" hidden>/,
+    'mobile access panel is kept in the page but hidden');
+  assert.match(page, /Enable LAN access/);
+  assert.match(page, /<span class="label">Bind host<\/span>/);
+  assert.match(page, /lan-host/);
+  assert.match(page, /Endpoint/);
+  assert.match(page, /Protocol/);
+  assert.match(page, /Discovery/);
+  assert.match(page, /Fingerprint/);
+  assert.match(page, /Paired devices/);
+  assert.match(page, /<section aria-labelledby="devices-heading" hidden>/,
+    'paired devices panel is kept in the page but hidden');
+  assert.match(page, /Revoke/);
+  assert.match(page, /Pending mobile connection requests/);
+  assert.match(page, /<section aria-labelledby="requests-heading" hidden>/,
+    'pending requests panel is kept in the page but hidden');
+  assert.match(page, /Confirm code/);
+  assert.match(page, /confirmation code/);
+  assert.match(page, /All-interface binding is enabled/);
+  assert.match(page, /public or WAN networks/);
+  assert.match(page, /advertised-address/);
+  assert.match(page, /Retry advertising/);
+  assert.match(page, /Advertised address/);
+  assert.match(page, /Scheduled Joystick message/);
+  assert.match(page, /Send a custom message/);
+  assert.match(page, /Flip a coin/);
+  assert.match(page, /id="reminder-task"/);
+  assert.match(page, /reminder-message.*disabled/);
+  assert.match(page, /task:.*reminder-task/);
+  assert.match(page, /id="reminder-message"/);
+  assert.match(page, /Every X minutes/);
+  assert.match(page, /Every hour/);
+  assert.match(page, /Every day at a selected local time/);
+  assert.match(page, /Reminder enabled/);
+});
+
+test('desktop shell renders the actionable NO_ADDRESS message without replacing it', () => {
+  assert.match(page, /status\.lanError \? status\.lanError\.message : status\.lanEnabled/);
+  assert.doesNotMatch(page, /status\.lanError\.message \+ ' Retry LAN access\.'/);
+});
+
+test('desktop shell invokes only the typed auth preload surface', () => {
+  assert.match(page, /window\.prismataDesktop\.auth/);
+  assert.match(page, /auth\.getSnapshot\(\)/);
+  assert.match(page, /auth\.signInWithJoystick\(\)/);
+  assert.match(page, /auth\.signOut\(\)/);
+  assert.match(page, /auth\.cancel\(\)/);
+  assert.match(page, /auth\.onStateChanged\(/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('auth:getSnapshot'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('auth:signInWithJoystick'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('auth:signOut'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('auth:cancel'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('desktop:listConnectionRequests'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('desktop:listDevices'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('desktop:listNetworkInterfaces'\)/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('desktop:setAdvertisedAddress'/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('desktop:retryAdvertising'/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('reminder:get'/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('reminder:update'/);
+  assert.match(preloadSource, /ipcRenderer\.invoke\('reminder:test'/);
+  assert.match(mainSource, /ipcMain\.handle\('desktop:listNetworkInterfaces'/);
+  assert.doesNotMatch(page, /require\(|process\.|ipcRenderer|accessToken|refreshToken/);
+  assert.match(mainSource, /ipcMain\.handle\('auth:cancel'/);
+  assert.match(mainSource, /ipcMain\.handle\('reminder:get'/);
+  assert.match(mainSource, /ipcMain\.handle\('reminder:update'/);
+  assert.match(mainSource, /getReminderSettings\(await activeLifecycle\?\.getSettings\(\)\)/);
+  assert.match(mainSource, /requireReminderLifecycle\(activeLifecycle\)/);
+  assert.match(mainSource, /ipcMain\.handle\('reminder:test'/);
+  assert.doesNotMatch(page, /ipcRenderer|accessToken|refreshToken/);
+  assert.match(mainSource, /lanHost: process\.env\.PRISMATA_LAN_HOST/);
+});
+
+test('desktop shell omits the removed account panel and session metadata', () => {
+  assert.doesNotMatch(page, /auth-heading|auth-state|auth-detail|userId|expiresAt/);
+  assert.doesNotMatch(page, /accessToken|refreshToken|sessionToken/);
+});
+
+test('desktop shell shows pending mobile requests and explicit code approval instead of QR pairing', () => {
+  assert.match(page, /Pending mobile connection requests/);
+  assert.match(page, /Confirm code/);
+  assert.match(page, /confirmation code/);
+  assert.doesNotMatch(page, /QR pairing code/);
+  assert.doesNotMatch(page, /Manual pairing/);
+  assert.match(page, /input\.type = 'text'/);
+  assert.match(page, /Confirm code/);
+  assert.doesNotMatch(page, /approveConnectionRequest\(request\.requestId, request\.code/);
+});

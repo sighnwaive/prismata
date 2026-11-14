@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: prismata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - prismata-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prismata"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    ports:
+      - "${PRISMATA_API_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/prismata}
+      JOYSTICK_CLIENT_ID: ${JOYSTICK_CLIENT_ID:?set JOYSTICK_CLIENT_ID in .env}
+      JOYSTICK_CLIENT_SECRET: ${JOYSTICK_CLIENT_SECRET:?set JOYSTICK_CLIENT_SECRET in .env}
+      JOYSTICK_TOKEN_URL: ${JOYSTICK_TOKEN_URL:-https://joystick.tv/api/oauth/token}
+      PRISMATA_JWT_SECRET: ${PRISMATA_JWT_SECRET:?set PRISMATA_JWT_SECRET in .env}
+      PRISMATA_SESSION_SECRET: ${PRISMATA_SESSION_SECRET:?set PRISMATA_SESSION_SECRET in .env}
+      PRISMATA_API_URL: ${PRISMATA_API_URL:-http://localhost:8080}
+      PRISMATA_PUBLIC_URL: ${PRISMATA_PUBLIC_URL:-http://localhost:8080}
+      PRISMATA_DESKTOP_CALLBACK_URL: ${PRISMATA_DESKTOP_CALLBACK_URL:-http://127.0.0.1:43110/auth/callback}
+      PRISMATA_MOBILE_CALLBACK_URL: ${PRISMATA_MOBILE_CALLBACK_URL:-prismata://auth/callback}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "pnpm --dir apps/backend run migrate && pnpm --dir apps/backend run start"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  prismata-postgres-data:

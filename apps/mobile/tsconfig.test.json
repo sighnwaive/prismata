@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/desktop-discovery.test.ts",
+    "test/mobile-certificate-pin.test.ts",
+    "test/mobile-entrypoint.test.ts",
+    "test/mobile-pairing.test.ts",
+    "test/mobile-scanner.test.ts",
+    "test/mobile-url-search-params.test.ts",
+    "../../packages/sync/src/**/*.ts"
+  ]
+}
