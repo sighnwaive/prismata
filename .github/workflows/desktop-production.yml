@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - platform: Windows (NSIS installer)
-            runner: windows-latest
+            runner: windows-2022
             target: win
             artifact: apps/desktop/release/*.exe
           - platform: Linux (AppImage)
@@ -38,6 +38,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Set up MSVC x64 build environment
+        if: matrix.target == 'win'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @prismata/desktop test
       - name: Validate desktop Joystick configuration
@@ -50,6 +55,8 @@ jobs:
           JOYSTICK_CLIENT_ID: ${{ secrets.JOYSTICK_CLIENT_ID }}
           JOYSTICK_SCOPES: ${{ secrets.JOYSTICK_SCOPES }}
           JOYSTICK_PROFILE_ENDPOINT: ${{ secrets.JOYSTICK_PROFILE_ENDPOINT }}
+          GYP_MSVS_VERSION: ${{ matrix.target == 'win' && '2022' || '' }}
+          npm_config_msvs_version: ${{ matrix.target == 'win' && '2022' || '' }}
           WIN_CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CSC_LINK || '' }}
           WIN_CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
           CSC_LINK: ${{ matrix.target == 'mac' && secrets.MAC_CSC_LINK || '' }}

@@ -45,10 +45,12 @@ test('packaged main process points tsx at the unpacked esbuild binary before reg
 
 test('production workflow builds on native Windows, Linux, and macOS runners', async () => {
   const workflow = await readFile(new URL('../../../.github/workflows/desktop-production.yml', import.meta.url), 'utf8');
-  for (const runner of ['windows-latest', 'ubuntu-latest', 'macos-latest']) {
+  for (const runner of ['windows-2022', 'ubuntu-latest', 'macos-latest']) {
     assert.ok(workflow.includes(runner), `workflow includes ${runner}`);
   }
   assert.match(workflow, /build:\$\{\{ matrix\.target \}\}/);
+  assert.match(workflow, /ilammy\/msvc-dev-cmd@v1/);
+  assert.match(workflow, /GYP_MSVS_VERSION:.*2022/);
   assert.match(workflow, /JOYSTICK_CLIENT_ID:\s*\$\{\{ secrets\.JOYSTICK_CLIENT_ID \}\}/);
   assert.match(workflow, /JOYSTICK_SCOPES:\s*\$\{\{ secrets\.JOYSTICK_SCOPES \}\}/);
   assert.match(workflow, /JOYSTICK_PROFILE_ENDPOINT:\s*\$\{\{ secrets\.JOYSTICK_PROFILE_ENDPOINT \}\}/);
