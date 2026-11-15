@@ -10,9 +10,11 @@ const joystickLogoPath = new URL('../electron/assets/joysticktv-logo-simple-dark
 const joystickLogo = readFileSync(joystickLogoPath);
 
 test('desktop shell visibly renders Joystick authentication controls and states', () => {
-  assert.match(page, /<body><div id="desktop-error" class="error-toast" role="alert" aria-live="assertive" hidden><\/div><main><div class="shell">/);
+  assert.match(page, /<body><div id="desktop-error" class="error-toast" role="alert" aria-live="assertive" hidden><span id="desktop-error-message" class="error-toast-message"><\/span><button id="desktop-error-dismiss" class="error-toast-dismiss" type="button" aria-label="Dismiss error" title="Dismiss">×<\/button><\/div><main><div class="shell">/);
   assert.match(page, /<section class="empty-panel" aria-label="Empty panel">.*?<\/section>\s*<section aria-label="Direct message">/);
   assert.match(page, /\.error-toast \{ position: fixed; z-index: 2000; top: 16px;/);
+  assert.match(page, /\.error-toast \{[^}]*justify-content: space-between/);
+  assert.match(page, /button\.error-toast-dismiss \{[^}]*flex: 0 0 28px/);
   assert.ok(page.includes(`src="data:image/svg+xml;base64,${joystickLogo.toString('base64')}"`),
     'the Joystick button embeds the Mochi project logo for the isolated data-URL page');
   assert.match(joystickLogo.toString('utf8'), /fill="#76E1F0"/,
@@ -87,8 +89,19 @@ test('desktop shell visibly renders Joystick authentication controls and states'
 });
 
 test('desktop shell surfaces LAN failures through the fixed error toast', () => {
-  assert.match(page, /const statusError = status\.discoveryError \|\| status\.lanError\?\.message; if \(statusError\) \{ error\.hidden = false; error\.textContent = statusError; \}/);
+  assert.match(page, /const statusError = status\.discoveryError \|\| status\.lanError\?\.message; if \(statusError\) \{ showError\(statusError\); \}/);
   assert.doesNotMatch(page, /status\.lanError\.message \+ ' Retry LAN access\.'/);
+});
+
+test('desktop shell translates an HTTP 400 token-refresh failure into actionable auth guidance', () => {
+  assert.match(page, /function userFacingAuthError\(message\) \{ return message === 'Joystick token refresh failed with HTTP 400' \? 'Joystick authentication could not be refreshed, please authenticate again\.' : message; \}/);
+  assert.match(page, /const authError = snapshot\?\.error \? userFacingAuthError\(snapshot\.error\) : undefined; joystickButton\.title = authError \|\| labels\[state\]; if \(snapshot\?\.error\) \{ authErrorMessage = snapshot\.error; showError\(authError\);/);
+});
+
+test('all desktop error toasts have a dismiss button and auto-dismiss after eight seconds', () => {
+  assert.match(page, /function showError\(message\) \{ if \(errorToastTimer !== undefined\) clearTimeout\(errorToastTimer\); errorMessage\.textContent = message; error\.hidden = false; errorToastTimer = setTimeout\(hideErrorToast, 8000\); \}/);
+  assert.match(page, /\$\('desktop-error-dismiss'\)\.onclick = hideErrorToast/);
+  assert.match(page, /function hideErrorToast\(\) \{ if \(errorToastTimer !== undefined\) \{ clearTimeout\(errorToastTimer\); errorToastTimer = undefined; \} error\.hidden = true; errorMessage\.textContent = ''; \}/);
 });
 
 test('desktop shell invokes only the typed auth preload surface', () => {

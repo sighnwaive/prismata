@@ -63,3 +63,11 @@ test('reminder UI renders per-reminder toggles and icon-based CRUD actions', () 
   assert.match(page, /reminder\.remove/);
   assert.match(page, /reminder\.testRecord/);
 });
+
+test('deleting the reminder currently being edited closes and clears the editor', () => {
+  const page = renderShellPage('offline', 'Prismata');
+
+  assert.match(page, /function closeReminderEditor\(\) \{ editingReminderId = undefined; editingReminderEnabled = false; \$\('reminder-editor'\)\.hidden = true;/);
+  assert.match(page, /await reminder\.remove\(id\); if \(editingReminderId === id\) closeReminderEditor\(\);/);
+  assert.match(page, /reminder-cancel'\)\.onclick = closeReminderEditor/);
+});

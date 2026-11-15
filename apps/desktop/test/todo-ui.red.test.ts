@@ -61,6 +61,13 @@ test('edited TODOs cannot be completed and stale edit forms clear on completion 
   assertPageMatches(/if \(!editedTodo \|\| editedTodo\.completedAt\) \{ editingTodoId = undefined; \$\('todo-form'\)\.reset\(\);/, 'clearing the edit form if the TODO is completed or disappears');
 });
 
+test('the completion button reflects edit state immediately and returns to normal after save', () => {
+  assertPageMatches(/function editTodo\(todo\) \{[\s\S]*?editingTodoId = todo\.id;[\s\S]*?renderTodos\(currentTodos\);[\s\S]*?\}/,
+    'rerendering the row after entering edit mode');
+  assertPageMatches(/editingTodoId = undefined; \$\('todo-form'\)\.reset\(\); \$\('todo-status'\)\.textContent = ''; if \(!todoPageHidden\) renderTodos\(currentTodos\)/,
+    'rerendering rows after a successful save clears edit mode');
+});
+
 test('TODO details appear in a hover and keyboard-focus tooltip while Complete stays visible', () => {
   assertPageMatches(/const details = document\.createElement\(['"]div['"]\); details\.className = 'todo-details'; details\.tabIndex = 0/, 'a focusable TODO details trigger');
   assertPageMatches(/tooltip\.setAttribute\('role', 'tooltip'\); details\.setAttribute\('aria-describedby', tooltip\.id\)/, 'an accessible tooltip description');
