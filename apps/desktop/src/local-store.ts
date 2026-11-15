@@ -16,7 +16,7 @@ export type TodoInput = { itemName: unknown; viewer?: unknown; note?: unknown };
 export type JoystickTodoEventInput = { eventId: string; itemName: string; viewer?: string; tokenAmount?: number; occurredAt?: string; source?: SourceLabel };
 export type TipHistoryRecord = { eventId: string; title: string; viewer?: string; amount?: number; occurredAt?: string; source?: SourceLabel };
 
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 10;
 const EPOCH = new Date(0).toISOString();
 const WHISPER_ATTEMPT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const TODO_COMPLETION_RETENTION_MS = 30_000;
@@ -378,4 +378,5 @@ function migrate(db: Database.Database, legacy?: LegacyState) {
         PRAGMA user_version = 9;`);
     })();
   }
+  if (version < 10) db.exec(`DELETE FROM todos WHERE source = 'Tips' AND lower(trim(item_name)) IN ('token tip', 'tip menu: null'); PRAGMA user_version = 10;`);
 }

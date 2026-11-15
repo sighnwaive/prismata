@@ -103,6 +103,7 @@ let removeTodoListChangedListener;
 let removeTipHistoryChangedListener;
 let joystickEventLogger;
 let joystickEventPruneTimer;
+let runtimeShutdownPromise;
 let ipcWired = false;
 let lifecycleReady = Promise.resolve();
 const authStateListeners = new Set();
@@ -132,6 +133,32 @@ const joystickTrafficDiagnostic = (event) => {
 
 function notifyAuthStateListeners() {
   for (const listener of authStateListeners) listener();
+}
+
+function shutdownRuntime() {
+  if (runtimeShutdownPromise) return runtimeShutdownPromise;
+
+  flipACoinScheduler.stop();
+  const runtime = activeJoystickWhisperRuntime;
+  const auth = activeAuth;
+  activeJoystickWhisperRuntime = undefined;
+  activeAuth = undefined;
+
+  runtimeShutdownPromise = Promise.all([
+    runtime?.shutdown().catch(() => undefined),
+    lifecycleManager.stop().catch(() => undefined),
+    auth?.close().catch(() => undefined),
+  ]).then(() => {
+    activeLifecycle = undefined;
+    removeJoystickWhisperStatusListener?.();
+    removeJoystickWhisperStatusListener = undefined;
+    removeTodoListChangedListener?.();
+    removeTodoListChangedListener = undefined;
+    removeTipHistoryChangedListener?.();
+    removeTipHistoryChangedListener = undefined;
+  });
+
+  return runtimeShutdownPromise;
 }
 
 const flipACoinScheduler = createFlipACoinScheduler({
@@ -288,6 +315,10 @@ function wireIpc() {
 }
 
 async function createWindow() {
+  if (runtimeShutdownPromise) {
+    await runtimeShutdownPromise;
+    runtimeShutdownPromise = undefined;
+  }
   await activeJoystickWhisperRuntime?.shutdown();
   activeJoystickWhisperRuntime = undefined;
   await activeAuth?.close();
@@ -375,7 +406,7 @@ async function createWindow() {
   removeTipHistoryChangedListener = activeLifecycle.onTipHistoryChanged((history) => {
     activeWindow?.webContents.send('tip-history:listChanged', history);
   });
-  window.on('closed', async () => {
+  window.on('closed', () => {
     if (activeWindow === window) {
       activeWindow = undefined;
       removeJoystickWhisperStatusListener?.();
@@ -384,13 +415,9 @@ async function createWindow() {
       removeTodoListChangedListener = undefined;
       removeTipHistoryChangedListener?.();
       removeTipHistoryChangedListener = undefined;
-      await activeJoystickWhisperRuntime?.shutdown();
-      activeJoystickWhisperRuntime = undefined;
-      const auth = activeAuth;
-      activeAuth = undefined;
-      await auth?.close();
-      activeLifecycle = undefined;
-      await lifecycleManager.stop();
+      // macOS keeps the app alive when its last window closes. Stop the
+      // background runtime there; on Windows/Linux, before-quit owns teardown.
+      if (process.platform === 'darwin') void shutdownRuntime();
     }
   });
 
@@ -456,12 +483,7 @@ app.on('before-quit', (event) => {
   event.preventDefault();
   quitting = true;
   if (joystickEventPruneTimer) clearInterval(joystickEventPruneTimer);
-  flipACoinScheduler.stop();
-  void Promise.all([
-    activeJoystickWhisperRuntime?.shutdown().catch(() => undefined),
-    lifecycleManager.stop().catch(() => undefined),
-    activeAuth?.close().catch(() => undefined),
-  ]).then(async () => {
+  void shutdownRuntime().then(async () => {
     try {
       await joystickEventLogger?.flush();
     } catch {
@@ -475,5 +497,5 @@ app.on('before-quit', (event) => {
     registeredIpcHandlers.clear();
     ipcWired = false;
     app.quit();
-  });
+  }).catch(() => app.quit());
 });

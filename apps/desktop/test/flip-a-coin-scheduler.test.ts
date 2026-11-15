@@ -134,6 +134,66 @@ test('supports the friendly schedule presets and configured message', async () =
   assert.deepEqual(sent.at(-1), { message: 'Time to choose' });
 });
 
+test('custom reminder message pools rotate in order and wrap around', async () => {
+  const sent: unknown[] = [];
+  const scheduler = createFlipACoinScheduler({
+    send: (payload) => { sent.push(payload); },
+    getSettings: () => [{
+      id: 'focus-reminder',
+      enabled: true,
+      task: 'custom-message',
+      message: 'First message',
+      messages: ['First message', 'Second message', 'Third message'],
+      schedule: 'interval',
+      intervalMinutes: 1,
+      dailyTime: '09:00',
+    }],
+  });
+
+  for (let minute = 0; minute < 5; minute += 1) {
+    await scheduler.tick(new Date(2026, 9, 14, 12, minute, 0));
+  }
+
+  assert.deepEqual(sent, [
+    { message: 'First message' },
+    { message: 'Second message' },
+    { message: 'Third message' },
+    { message: 'First message' },
+    { message: 'Second message' },
+  ]);
+});
+
+test('testing a reminder previews its next message without advancing the scheduled rotation', async () => {
+  const sent: unknown[] = [];
+  const scheduler = createFlipACoinScheduler({
+    send: (payload) => { sent.push(payload); },
+    getSettings: () => [{
+      id: 'focus-reminder',
+      enabled: true,
+      task: 'custom-message',
+      message: 'First message',
+      messages: ['First message', 'Second message'],
+      schedule: 'interval',
+      intervalMinutes: 1,
+      dailyTime: '09:00',
+    }],
+  });
+
+  await scheduler.tick(new Date(2026, 9, 14, 12, 0, 0));
+  await scheduler.testNow({
+    id: 'focus-reminder',
+    task: 'custom-message',
+    messages: ['First message', 'Second message'],
+  });
+  await scheduler.tick(new Date(2026, 9, 14, 12, 1, 0));
+
+  assert.deepEqual(sent, [
+    { message: 'First message' },
+    { message: 'Second message' },
+    { message: 'Second message' },
+  ]);
+});
+
 test('disabled reminders do not send', async () => {
   const sent: unknown[] = [];
   const scheduler = createFlipACoinScheduler({ send: (payload) => { sent.push(payload); }, getSettings: () => ({ enabled: false, task: 'custom-message', message: 'Nope', schedule: 'hourly', intervalMinutes: 5, dailyTime: '09:00' }) });

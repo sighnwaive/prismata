@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createServer } from 'node:https';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { Socket } from 'node:net';
 import { createLocalStore, type DeviceRecord, type JoystickTodoEventInput, type SourceLabel, type TipHistoryRecord, type TodoInput, type TodoRecord } from './local-store.js';
 import { CONFIRMATION_CODE_ALPHABET, CONFIRMATION_CODE_LENGTH, isConfirmationCode } from '@prismata/sync';
 
@@ -56,11 +57,11 @@ export function parseJoystickTodoEvent(event: unknown): JoystickTodoEventInput |
   let amount: unknown;
   let source: SourceLabel;
   if (event.type === 'tipped') {
-    if (event.topic !== 'channel.tip' || data.is_test !== false
-      || data.tip_menu_item === null || data.tip_menu_item === undefined) return null;
+    if (event.topic !== 'channel.tip' || data.is_test !== false) return null;
     const tipMenuItem = isRecord(data.tip_menu_item) ? data.tip_menu_item.title : data.tip_menu_item;
     const menuItem = cleanEventText(tipMenuItem, TODO_ITEM_NAME_MAX_LENGTH - 'Tip menu: '.length);
-    itemName = menuItem ? `Tip menu: ${menuItem}` : 'Token tip';
+    if (!menuItem || menuItem.toLowerCase() === 'null') return null;
+    itemName = `Tip menu: ${menuItem}`;
     amount = data.how_much;
     source = 'Tips';
   } else if (event.type === 'milestone_completed') {
@@ -124,7 +125,9 @@ export async function createDesktopService(options: ServiceOptions = {}) {
   const refreshSessions = new Map<string, string>();
   const transientCodes = new Map<string, string>();
   let server: ReturnType<typeof createServer> | undefined;
-  let closed = false;
+  const sockets = new Set<Socket>();
+  let stopping: Promise<void> | undefined;
+  let closing: Promise<void> | undefined;
   const tls = options.tls ?? { key: '', cert: '', fingerprint: '' };
   const serverFactory = options.serverFactory ?? createServer;
   const request = async (pathname: string, input: Request = {}): Promise<Result> => {
@@ -222,9 +225,37 @@ export async function createDesktopService(options: ServiceOptions = {}) {
       saveSettings: (settings: Record<string, unknown>) => store.updateSettings(settings, 'desktop-network'),
       claimWhisperAttempt: (attempt: Parameters<typeof store.claimWhisperAttempt>[0]) => store.claimWhisperAttempt(attempt),
       pruneWhisperAttempts: (now: number) => store.pruneWhisperAttempts(now),
-     async close() { if (closed) return; closed = true; await this.stop(); store.close(); },
-     async start(port = 0, host = '127.0.0.1') { if (!tls.key || !tls.cert || !/^[a-f0-9]{64}$/i.test(tls.fingerprint)) throw new Error('TLS identity is required'); server = serverFactory({ key: tls.key, cert: tls.cert }, async (req, res) => handleHttp(request, req, res)); await new Promise<void>((resolve, reject) => { const onError = (error: Error) => { server?.off?.('listening', onListening); reject(error); }; const onListening = () => { server?.off?.('error', onError); resolve(); }; server!.once('error', onError); server!.once('listening', onListening); server!.listen(port, host); }); return server.address(); },
-    async stop() { await new Promise<void>((resolve, reject) => server ? server.close((error) => error ? reject(error) : resolve()) : resolve()); server = undefined; },
+      close() {
+        if (closing) return closing;
+        closing = (async () => {
+          try {
+            await this.stop();
+          } finally {
+            store.close();
+          }
+        })();
+        return closing;
+      },
+      async start(port = 0, host = '127.0.0.1') { if (!tls.key || !tls.cert || !/^[a-f0-9]{64}$/i.test(tls.fingerprint)) throw new Error('TLS identity is required'); server = serverFactory({ key: tls.key, cert: tls.cert }, async (req, res) => handleHttp(request, req, res)); server.on?.('connection', (socket: Socket) => { sockets.add(socket); socket.once('close', () => sockets.delete(socket)); }); await new Promise<void>((resolve, reject) => { const onError = (error: Error) => { server?.off?.('listening', onListening); reject(error); }; const onListening = () => { server?.off?.('error', onError); resolve(); }; server!.once('error', onError); server!.once('listening', onListening); server!.listen(port, host); }); return server.address(); },
+     stop() {
+       if (stopping) return stopping;
+       const current = server;
+       if (!current) return Promise.resolve();
+       stopping = new Promise<void>((resolve, reject) => {
+         current.close((error) => {
+           if (server === current) server = undefined;
+           const code = (error as NodeJS.ErrnoException | undefined)?.code;
+           if (error && code !== 'ERR_SERVER_NOT_RUNNING') reject(error);
+           else resolve();
+         });
+         // Closing the listener alone can wait forever for active keep-alive or
+         // incomplete requests. Terminate those sockets so desktop shutdown
+         // cannot leave the process running after its window has closed.
+         current.closeAllConnections?.();
+         for (const socket of sockets) socket.destroy();
+       }).finally(() => { stopping = undefined; });
+       return stopping;
+     },
   };
 }
 

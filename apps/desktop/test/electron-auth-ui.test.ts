@@ -74,9 +74,10 @@ test('desktop shell visibly renders Joystick authentication controls and states'
   assert.match(page, /Send a custom message/);
   assert.match(page, /Flip a coin/);
   assert.match(page, /id="reminder-task"/);
-  assert.match(page, /reminder-message.*disabled/);
-  assert.match(page, /task:.*reminder-task/);
-  assert.match(page, /id="reminder-message"/);
+  assert.match(page, /reminder-message-add/);
+  assert.match(page, /const task = \$\('reminder-task'\)\.value/);
+  assert.match(page, /id="reminder-message-list"/);
+  assert.match(page, /Custom messages send in order/);
   assert.match(page, /Every X minutes/);
   assert.match(page, /Every hour/);
   assert.match(page, /Every day at a selected local time/);

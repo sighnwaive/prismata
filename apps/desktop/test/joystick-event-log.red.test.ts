@@ -423,19 +423,21 @@ test('Electron startup prints the development log path once after logger initial
 test('main shutdown drains event writes after gateway shutdown and before quitting', async () => {
   const mainSource = await readFile(new URL('../electron/main.mjs', import.meta.url), 'utf8');
   const runtimeSource = await readFile(new URL('../electron/joystick-whisper-runtime.ts', import.meta.url), 'utf8');
+  const shutdownRuntime = mainSource.slice(mainSource.indexOf('function shutdownRuntime()'), mainSource.indexOf('const flipACoinScheduler'));
   const beforeQuit = mainSource.slice(mainSource.indexOf("app.on('before-quit'"));
-  const shutdownContinuation = beforeQuit.match(/Promise\.all\(\[([\s\S]*?)\]\)\.(?:then|finally)\(\s*(async\s*)?\(\)\s*=>\s*\{([\s\S]*?)\}\)/);
 
   const runtimeShutdown = runtimeSource.slice(runtimeSource.indexOf('async shutdown()'), runtimeSource.indexOf('async getSettings()', runtimeSource.indexOf('async shutdown()')));
   assert.match(runtimeShutdown, /await gateway\.stop\(\)/, 'runtime shutdown awaits gateway stop before resolving');
-  assert.ok(shutdownContinuation, 'shutdown waits for its cleanup promise before final quit');
-  assert.match(shutdownContinuation![1]!, /activeJoystickWhisperRuntime\?\.shutdown\(\)/,
+  assert.match(shutdownRuntime, /runtime\?\.shutdown\(\)/,
     'the cleanup promise waits for the runtime to stop its gateway');
-  assert.match(shutdownContinuation![3]!, /await\s+joystickEventLogger\??\.(?:flush|drain)\(\)/,
+  assert.match(beforeQuit, /shutdownRuntime\(\)\.then\(async \(\) => \{/,
+    'before-quit awaits the shared runtime cleanup before final quit');
+  assert.match(beforeQuit, /await\s+joystickEventLogger\??\.(?:flush|drain)\(\)/,
     'the logger is drained only after the gateway shutdown promise resolves');
-  assert.ok(shutdownContinuation![2], 'the post-shutdown continuation is async so it can await log draining');
-  assert.ok(shutdownContinuation![3]!.indexOf('joystickEventLogger') < shutdownContinuation![3]!.indexOf('app.quit()'),
+  assert.ok(beforeQuit.indexOf('joystickEventLogger') < beforeQuit.indexOf('app.quit()'),
     'Electron quits only after diagnostic log writes have drained');
+  assert.match(mainSource, /process\.platform === 'darwin'\) void shutdownRuntime\(\)/,
+    'closing a window on macOS uses the same idempotent cleanup path');
 });
 
 test('root README documents the platform userData location and diagnostic-log privacy and retention', async () => {

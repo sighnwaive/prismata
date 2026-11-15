@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { X509Certificate } from 'node:crypto';
+import { connect as tlsConnect } from 'node:tls';
 import test from 'node:test';
 import { createDesktopService } from '../src/desktop-service.js';
 import { createTransportIdentityStore, isTransportMaterialValid } from '../src/transport-identity.js';
@@ -80,6 +81,29 @@ test('desktop LAN service uses HTTPS and does not expose private material', asyn
   assert.equal(service.transportMetadata().fingerprint, identity.fingerprint);
   assert.equal('key' in service.transportMetadata(), false);
   await service.stop();
+});
+
+test('desktop LAN service shutdown closes lingering HTTPS connections', async () => {
+  const values = new Map<string, unknown>();
+  const identity = await createTransportIdentityStore({ get: async (key) => values.get(key) ?? null, set: async (key, value) => { values.set(key, value); } }).loadOrCreate('127.0.0.1');
+  const service = await createDesktopService({ dataFile: ':memory:', tls: identity });
+  const address = await service.start(0, '127.0.0.1');
+  assert.ok(address && typeof address === 'object');
+  const socket = tlsConnect({ host: '127.0.0.1', port: address.port, rejectUnauthorized: false });
+  const socketClosed = new Promise<void>((resolve) => socket.once('close', resolve));
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      socket.once('secureConnect', resolve);
+      socket.once('error', reject);
+    });
+    socket.write('GET /api/v1/health HTTP/1.1\r\nHost: localhost\r\n');
+    await service.close();
+    await socketClosed;
+    assert.equal(socket.destroyed, true);
+  } finally {
+    socket.destroy();
+  }
 });
 
 for (const code of ['EADDRINUSE', 'EACCES']) {

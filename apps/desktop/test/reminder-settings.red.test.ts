@@ -16,6 +16,17 @@ test('reminder settings normalize persisted values and round-trip through the pr
   assert.deepEqual(await api.update({ ...settings, enabled: true }), { ...settings, enabled: true });
 });
 
+test('reminder message pools are trimmed, bounded, and keep the first message as the legacy value', () => {
+  const settings = normalizeReminderSettings({
+    messages: ['  First message  ', '', 'Second message'],
+    schedule: 'hourly',
+  });
+
+  assert.deepEqual(settings.messages, ['First message', 'Second message']);
+  assert.equal(settings.message, 'First message');
+  assert.equal(normalizeReminderSettings({ message: 'Legacy only' }).message, 'Legacy only');
+});
+
 test('reminder:get returns saved custom message and schedule', () => {
   const savedReminder = { enabled: true, task: 'custom-message', message: 'Saved message', schedule: 'daily', intervalMinutes: 5, dailyTime: '18:30' };
   const saved = { settings: { reminder: savedReminder } };

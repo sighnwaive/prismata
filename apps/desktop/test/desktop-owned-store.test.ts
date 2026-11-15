@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import Database from 'better-sqlite3';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,7 +10,7 @@ test('local store uses SQLite WAL and persists settings across instances', async
   const directory = await mkdtemp(path.join(os.tmpdir(), 'prismata-store-'));
   const file = path.join(directory, 'state.sqlite');
   const first = await createLocalStore(file);
-  assert.equal(first.schemaVersion, 9);
+  assert.equal(first.schemaVersion, 10);
   await first.updateSettings({ theme: 'night' }, 'desktop');
 
   const second = await createLocalStore(file);
@@ -33,6 +34,51 @@ test('local store migrates legacy reminder settings into an identified reminders
   assert.deepEqual(snapshot.settings.reminders, [{ id: 'legacy-reminder', enabled: false, task: 'custom-message', message: 'Legacy', schedule: 'daily', intervalMinutes: 5, dailyTime: '18:30' }]);
   assert.equal(snapshot.settings.theme, 'night');
   store.close();
+});
+
+test('local store preserves reminder message pools across reopen', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'prismata-reminder-pool-'));
+  const file = path.join(directory, 'state.sqlite');
+  const store = await createLocalStore(file);
+  await store.updateSettings({
+    reminders: [{
+      id: 'focus-reminder',
+      enabled: true,
+      task: 'custom-message',
+      message: 'First message',
+      messages: ['First message', 'Second message'],
+      schedule: 'hourly',
+      intervalMinutes: 5,
+      dailyTime: '09:00',
+    }],
+  }, 'desktop');
+  store.close();
+
+  const reopened = await createLocalStore(file);
+  const [reminder] = (await reopened.getSettings()).settings.reminders as Array<{ message: string; messages?: string[] }>;
+  assert.equal(reminder.message, 'First message');
+  assert.deepEqual(reminder.messages, ['First message', 'Second message']);
+  reopened.close();
+});
+
+test('local store removes legacy tip-placeholder TODOs but preserves manual TODOs', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'prismata-tip-todo-cleanup-'));
+  const file = path.join(directory, 'state.sqlite');
+  const store = await createLocalStore(file);
+  await store.createJoystickTodoFromEvent({ eventId: 'old-token-tip', itemName: 'Token tip', source: 'Tips' });
+  await store.createJoystickTodoFromEvent({ eventId: 'old-null-tip', itemName: 'Tip menu: NULL', source: 'Tips' });
+  await store.addTodo({ itemName: 'Token tip' });
+  store.close();
+
+  const database = new Database(file);
+  database.pragma('user_version = 9');
+  database.close();
+
+  const reopened = await createLocalStore(file);
+  assert.deepEqual((await reopened.listTodos()).map(({ itemName, source }) => ({ itemName, source })), [
+    { itemName: 'Token tip', source: 'Manual' },
+  ]);
+  reopened.close();
 });
 
 test('local store atomically rejects stale settings revisions across instances', async () => {

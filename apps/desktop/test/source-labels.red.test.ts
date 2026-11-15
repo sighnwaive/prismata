@@ -189,7 +189,7 @@ test('migration leaves existing TODO and Tip History sources blank instead of gu
     store = await openStore(file, { now: () => Date.parse(occurredAt) });
     const [todo] = await store.listTodos();
     const [history] = await store.listTipHistory();
-    assert.equal(store.schemaVersion, 9, 'the source-label migration advances the schema version');
+    assert.equal(store.schemaVersion, 10, 'the source-label and tip placeholder cleanup migrations advance the schema version');
     assert.deepEqual(todo, {
       id: 'legacy-todo', itemName: 'Old task', viewer: 'Ada', note: 'Keep this note',
       tokenAmount: 42, occurredAt, createdAt: occurredAt,

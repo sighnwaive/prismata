@@ -8,7 +8,9 @@ export type ReminderTask = typeof reminderTasks[number];
 export const defaultIntervalMinutes = 5;
 const MIN_INTERVAL_MINUTES = 1;
 const MAX_INTERVAL_MINUTES = 59;
-export type ReminderSettings = { enabled: boolean; task: ReminderTask; message: string; schedule: ReminderSchedule; intervalMinutes: number; dailyTime: string };
+const MAX_REMINDER_MESSAGES = 10;
+const MAX_REMINDER_MESSAGE_LENGTH = 500;
+export type ReminderSettings = { enabled: boolean; task: ReminderTask; message: string; messages?: string[]; schedule: ReminderSchedule; intervalMinutes: number; dailyTime: string };
 export type ReminderRecord = ReminderSettings & { id: string };
 
 export const defaultReminderSettings: ReminderSettings = {
@@ -29,8 +31,25 @@ export function normalizeReminderSettings(value: unknown): ReminderSettings {
   const schedule = legacySchedule === 'every-5-minutes' ? 'interval' : reminderSchedules.includes(source.schedule as ReminderSchedule) ? source.schedule as ReminderSchedule : defaultReminderSettings.schedule;
   const intervalMinutes = Number.isInteger(source.intervalMinutes) && (source.intervalMinutes as number) >= MIN_INTERVAL_MINUTES && (source.intervalMinutes as number) <= MAX_INTERVAL_MINUTES ? source.intervalMinutes as number : defaultIntervalMinutes;
   const dailyTime = typeof source.dailyTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(source.dailyTime) ? source.dailyTime : defaultReminderSettings.dailyTime;
-  const message = typeof source.message === 'string' && source.message.trim() ? source.message : defaultReminderSettings.message;
-  return { enabled: source.enabled !== false, task, message, schedule, intervalMinutes, dailyTime };
+  const legacyMessage = typeof source.message === 'string' && source.message.trim()
+    ? source.message.trim().slice(0, MAX_REMINDER_MESSAGE_LENGTH)
+    : defaultReminderSettings.message;
+  const messages = Array.isArray(source.messages)
+    ? source.messages
+      .slice(0, MAX_REMINDER_MESSAGES)
+      .filter((message): message is string => typeof message === 'string' && Boolean(message.trim()))
+      .map((message) => message.trim().slice(0, MAX_REMINDER_MESSAGE_LENGTH))
+    : undefined;
+  const message = messages?.[0] ?? legacyMessage;
+  return {
+    enabled: source.enabled !== false,
+    task,
+    message,
+    ...(messages?.length ? { messages } : {}),
+    schedule,
+    intervalMinutes,
+    dailyTime,
+  };
 }
 
 function objectValue(value: unknown): Record<string, unknown> {

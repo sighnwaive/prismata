@@ -79,6 +79,13 @@ test('tip events require channel.tip and a menu item before creating TODOs', () 
     'tips without a menu item do not create TODOs');
   assert.equal(parseJoystickTodoEvent({ ...base, topic: 'channel.tip', data: { is_test: false } }), null,
     'tips with no menu-item field do not create TODOs');
+  for (const tipMenuItem of ['null', ' NULL ', { title: 'null' }, { title: '  ' }]) {
+    assert.equal(parseJoystickTodoEvent({
+      ...base,
+      topic: 'channel.tip',
+      data: { ...base.data, tip_menu_item: tipMenuItem },
+    }), null, `tip menu-item sentinel ${JSON.stringify(tipMenuItem)} does not create a TODO`);
+  }
 });
 
 test('verified Joystick redemption envelopes map only allowlisted TODO fields and reject unrelated or malformed events', () => {

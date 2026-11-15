@@ -45,7 +45,7 @@ test('tip history survives SQLite reopen and TODO expiry without expiration or d
 
   try {
     const first = await open();
-    assert.equal(first.schemaVersion, 9, 'the store reports the schema version that includes Tip History and source labels');
+    assert.equal(first.schemaVersion, 10, 'the store reports the current schema version');
     assert.equal(typeof first.recordTipHistory, 'function', 'SQLite store exposes durable tip-history recording');
     assert.equal(typeof first.listTipHistory, 'function', 'SQLite store exposes a distinct tip-history list');
     if (typeof first.recordTipHistory !== 'function' || typeof first.listTipHistory !== 'function') return;
@@ -85,8 +85,8 @@ test('tip history survives SQLite reopen and TODO expiry without expiration or d
 
     const inspection = new Database(file, { readonly: true });
     try {
-      assert.equal(inspection.pragma('user_version', { simple: true }), 9,
-        'the on-disk SQLite schema is migrated through the source-label version');
+      assert.equal(inspection.pragma('user_version', { simple: true }), 10,
+        'the on-disk SQLite schema is migrated through tip-placeholder cleanup');
       const tableNames = (inspection.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all() as Array<{ name: string }>).map(({ name }) => name);
       const storedRows = tableNames.flatMap((name) => {
         const quotedName = `"${name.replace(/"/g, '""')}"`;

@@ -61,12 +61,20 @@ export function createFlipACoinScheduler({
 }: SchedulerOptions): FlipACoinScheduler {
   let timer: ReturnType<typeof globalThis.setInterval> | undefined;
   const lastSentBuckets = new Map<string, string>();
+  const nextMessageIndexes = new Map<string, number>();
 
-  const sendForSettings = async (settings: ReminderSettings) => {
+  const sendForSettings = async (settings: ReminderRecord, advanceMessagePool = false) => {
+    const messages = settings.messages?.length ? settings.messages : [settings.message];
+    const messageIndex = settings.task === 'custom-message'
+      ? (nextMessageIndexes.get(settings.id) ?? 0) % messages.length
+      : 0;
     const message = settings.task === 'coin-flip'
       ? `I've flipped a coin, it's ${randomInt(2) === 0 ? 'heads' : 'tails'}`
-      : settings.message;
+      : messages[messageIndex];
     await send({ message });
+    if (advanceMessagePool && settings.task === 'custom-message' && messages.length > 1) {
+      nextMessageIndexes.set(settings.id, (messageIndex + 1) % messages.length);
+    }
   };
 
   const tick = async (at: Date, startedAt?: Date) => {
@@ -81,7 +89,7 @@ export function createFlipACoinScheduler({
       if (startedAt && scheduleBucketStart(at, settings).getTime() <= startedAt.getTime()) continue;
       lastSentBuckets.set(settings.id, currentBucket);
       try {
-        await sendForSettings(settings);
+        await sendForSettings(settings, true);
       } catch (error) {
         firstError ??= error;
       }
