@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { join, sep } from 'node:path';
+import { resolvePackagedEsbuildBinary } from './esbuild-runtime.mjs';
 
 if (app.isPackaged) {
   try {
@@ -16,8 +16,7 @@ if (app.isPackaged) {
     if (error?.code !== 'ENOENT') throw error;
   }
 
-  const require = createRequire(import.meta.url);
-  const esbuildPath = require.resolve(`@esbuild/${process.platform}-${process.arch}/bin/esbuild`);
+  const esbuildPath = resolvePackagedEsbuildBinary(import.meta.url);
   process.env.ESBUILD_BINARY_PATH = esbuildPath.replace(`${sep}app.asar${sep}`, `${sep}app.asar.unpacked${sep}`);
 }
 await import('tsx/esm');

@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import afterPack from '../electron/after-pack.mjs';
+import { resolvePackagedEsbuildBinary } from '../electron/esbuild-runtime.mjs';
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   scripts: Record<string, string>;
@@ -41,6 +43,12 @@ test('packaged main process points tsx at the unpacked esbuild binary before reg
   assert.ok(configSetup >= 0 && binarySetup > configSetup && tsxRegistration > binarySetup,
     'packaged runtime config is loaded before tsx and the esbuild binary setup');
   assert.match(mainSource, /if\s*\(app\.isPackaged\)[\s\S]*?app\.asar\.unpacked/);
+});
+
+test('packaged esbuild binary resolves from tsx dependencies instead of the app root', () => {
+  const binaryPath = resolvePackagedEsbuildBinary(new URL('../electron/main.mjs', import.meta.url));
+
+  assert.ok(existsSync(binaryPath), `resolved esbuild binary exists: ${binaryPath}`);
 });
 
 test('production workflow builds on native Windows, Linux, and macOS runners', async () => {
