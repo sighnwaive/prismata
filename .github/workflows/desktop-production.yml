@@ -2,6 +2,12 @@ name: Desktop production builds
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish installers to a GitHub Release (run on a version tag)
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - 'v*'
@@ -110,3 +116,44 @@ jobs:
           path: ${{ matrix.artifact }}
           if-no-files-found: error
           retention-days: 14
+
+  publish:
+    name: Publish GitHub Release
+    if: github.event_name == 'push' || inputs.publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Validate version tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9] ]]; then
+            echo "Publishing requires a version tag beginning with v followed by a number; got '$RELEASE_TAG'." >&2
+            exit 1
+          fi
+      - name: Download installers
+        uses: actions/download-artifact@v6
+        with:
+          path: release-assets
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          mapfile -d '' assets < <(find release-assets -type f -print0)
+          if [[ ${#assets[@]} -eq 0 ]]; then
+            echo "No desktop installers were downloaded." >&2
+            exit 1
+          fi
+
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "Prismata $RELEASE_TAG" \
+              --generate-notes \
+              --verify-tag
+          fi
+
+          gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber

@@ -70,6 +70,12 @@ test('production workflow builds on native Windows, Linux, and macOS runners', a
   assert.match(workflow, /pnpm\/action-setup@v6/);
   assert.match(workflow, /actions\/setup-node@v5/);
   assert.match(workflow, /actions\/upload-artifact@v6/);
+  assert.match(workflow, /publish:\s*\n\s+description: Publish installers to a GitHub Release/);
+  assert.match(workflow, /if: github\.event_name == 'push' \|\| inputs\.publish/);
+  assert.match(workflow, /actions\/download-artifact@v6/);
+  assert.match(workflow, /gh release create/);
+  assert.match(workflow, /gh release upload/);
+  assert.match(workflow, /contents: write/);
   assert.match(workflow, /run: pnpm run build:\$\{\{ matrix\.target \}\}\n\s+working-directory: apps\/desktop/);
   assert.doesNotMatch(workflow, /pnpm --filter @prismata\/desktop run build:/);
   assert.match(workflow, /ilammy\/msvc-dev-cmd@v1/);
