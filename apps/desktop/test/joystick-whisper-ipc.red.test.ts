@@ -50,7 +50,7 @@ test('typed whisper preload API exposes only settings and sanitized connection s
   assert.equal('sendWhisper' in api, false);
 });
 
-test('desktop shell offers independent rule controls, gateway states, and offline no-catch-up copy', () => {
+test('desktop shell offers independent whisper controls without gateway status copy', () => {
   const html = renderShellPage('ready', 'Prismata desktop');
   for (const rule of ['followed', 'subscribed', 'resubscribed', 'gift-sender']) {
     const enabledId = `whisper-${rule}-enabled`;
@@ -63,22 +63,35 @@ test('desktop shell offers independent rule controls, gateway states, and offlin
     assert.match(html, new RegExp(`id="${messageId}"`), `${rule} must have its own message control`);
     assert.match(html, new RegExp(`for="${messageId}"`), `${rule} message must have an associated label`);
   }
-  assert.match(html, /connected/i);
-  assert.match(html, /reconnecting/i);
-  assert.match(html, /unavailable/i);
-  assert.match(html, /while Prismata is (?:running and )?connected/i);
-  assert.match(html, /offline|disconnected/i);
-  assert.match(html, /not (?:be )?caught up/i);
+  assert.doesNotMatch(html, /Connection unavailable|Connected to Joystick events|reconnecting/i);
+  assert.doesNotMatch(html, /Whispers run only while Prismata is running and connected/);
+  assert.doesNotMatch(html, /Events received while offline or disconnected are not caught up/);
+  assert.doesNotMatch(html, /id="whisper-settings-status"|Whisper settings saved locally\./);
 });
 
 test('Automations UI configures multiple ordered public messages for live Drop-in events', () => {
   const html = renderShellPage('ready', 'Prismata desktop');
+  assert.match(html, />New follower whisper<\/label>/);
+  assert.match(html, />New subscription \/ gift recipients whisper<\/label>/);
+  assert.match(html, />Resubscription whisper<\/label>/);
+  assert.match(html, />Gift sender whisper<\/label>/);
   assert.match(html, /Drop-in public chat/);
   assert.match(html, /Send up to 10 messages in order when a viewer drops in/);
   assert.match(html, /Requires chat:write and a live stream/);
-  assert.match(html, /id="drop-in-chat-enabled"/);
+  assert.match(html, /id="drop-in-chat-enabled" type="checkbox" role="switch"/);
+  assert.match(html, />Drop-in chat messages<\/label>/);
+  assert.doesNotMatch(html, />Enable Drop-in chat messages<\/label>/);
+  for (const id of ['whisper-followed-enabled', 'whisper-subscribed-enabled', 'whisper-resubscribed-enabled', 'whisper-gift-sender-enabled']) {
+    assert.match(html, new RegExp(`id="${id}" type="checkbox" role="switch"`));
+  }
+  assert.match(html, /\.whisper-rule input\[type="checkbox"\]:checked/);
+  assert.match(html, /\.whisper-rule > label \{ align-self: start; \}/);
+  assert.match(html, /section\[aria-label="Automations"\] > \.whisper-rule:first-of-type \{ border-top: 0; \}/);
+  assert.match(html, /#drop-in-chat-enabled:checked/);
   assert.match(html, /id="drop-in-message-list"/);
   assert.match(html, /id="drop-in-message-add"[^>]*>Add message/);
+  assert.doesNotMatch(html, /id="drop-in-chat-status"|Drop-in chat automation saved\./);
+  assert.match(html, /row\.append\(field\);\s*if \(index > 0\)/);
   assert.match(html, /textarea\.maxLength = 500/);
   assert.match(html, /messages\.length >= 10/);
   assert.match(html, /joystickChatAutomations\.updateSettings\(snapshot\)/);

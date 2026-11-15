@@ -55,6 +55,12 @@ test('TODO completion calls the typed API and presents completed rows as muted w
   assertPageMatches(/button\.onclick = \(\) => completed \? undoCompleteTodo\(todo\) : completeTodo\(todo\)/, 'an undo action on completed rows');
 });
 
+test('edited TODOs cannot be completed and stale edit forms clear on completion or removal', () => {
+  assertPageMatches(/button\.disabled = completed \? undoing \|\| removing : pending \|\| removing \|\| editing/, 'the completion action disabled while editing');
+  assertPageMatches(/todo\.completedAt \|\| editingTodoId === todo\.id \|\| completingTodoIds\.has\(todo\.id\)/, 'a guard against completing the edited TODO');
+  assertPageMatches(/if \(!editedTodo \|\| editedTodo\.completedAt\) \{ editingTodoId = undefined; \$\('todo-form'\)\.reset\(\);/, 'clearing the edit form if the TODO is completed or disappears');
+});
+
 test('TODO details appear in a hover and keyboard-focus tooltip while Complete stays visible', () => {
   assertPageMatches(/const details = document\.createElement\(['"]div['"]\); details\.className = 'todo-details'; details\.tabIndex = 0/, 'a focusable TODO details trigger');
   assertPageMatches(/tooltip\.setAttribute\('role', 'tooltip'\); details\.setAttribute\('aria-describedby', tooltip\.id\)/, 'an accessible tooltip description');
@@ -81,20 +87,25 @@ test('completed TODOs show a live countdown to the left of the action buttons', 
   assertPageMatches(/clearInterval\(todoExpiryInterval\)/, 'timer cleanup when the page hides');
 });
 
-test('completed TODOs have an accessible X removal action only during the countdown', () => {
+test('completed TODOs have an accessible trashcan removal action only during the countdown', () => {
   assertPageMatches(/if \(completed && expiryTimer && Number\(expiryTimer\.dataset\.deadline\) > Date\.now\(\)\)/, 'the removal action only while a completed item is counting down');
-  assertPageMatches(/removeButton\.textContent = '✕'/, 'an X icon');
+  assertPageMatches(/removeButton\.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18"/, 'a decorative trashcan icon');
   assertPageMatches(/removeButton\.setAttribute\('aria-label', 'Remove ' \+ todo\.itemName\)/, 'an accessible task-specific label');
+  assertPageMatches(/removeButton\.disabled = removing \|\| editing/, 'the remove action disabled while this TODO is being edited');
+  assertPageMatches(/if \(editingTodoId === todo\.id\) return;/, 'a guard against removing the actively edited TODO');
   assertPageMatches(/removeButton\.onclick = \(\) => removeTodo\(todo\)/, 'immediate removal without a confirmation prompt');
   assertPageMatches(/if \(!todo\.completedAt \|\| Date\.parse\(todo\.completedAt\) \+ 30_000 <= Date\.now\(\)/, 'preventing removal outside the countdown window');
   assertPageMatches(/await todos\.remove\(todo\.id\)/, 'the remove request');
   assertPageMatches(/button\.hidden = remainingMs <= 0/, 'hiding undo and remove once the countdown ends');
-  assertPageMatches(/button\.todo-dismiss-button \{ color: #[\da-f]{6};/i, 'a visible X icon style');
+  assertPageMatches(/button\.todo-dismiss-button svg \{ width: 18px; height: 18px;/, 'a sized trashcan icon style');
 });
 
 test('manual TODOs have an accessible pencil editor that fills and saves the form details', () => {
   assertPageMatches(/todo\.source === 'Manual' && !completed/, 'edit controls only for open Manual TODOs');
-  assertPageMatches(/editButton\.textContent = '✎'/, 'a pencil icon');
+  assertPageMatches(/const editPencilIcon = '<svg viewBox="0 0 24 24".*M16\.5 3\.5/, 'the shared SVG pencil icon');
+  assertPageMatches(/edit: editPencilIcon/, 'the Reminders editor uses the shared SVG pencil icon');
+  assertPageMatches(/editButton\.innerHTML = editPencilIcon/, 'the TODO editor uses the shared SVG pencil icon');
+  assertPageMatches(/button\.todo-edit-button svg \{ width: 19px; height: 19px;/, 'the pencil icon sizing');
   assertPageMatches(/editButton\.setAttribute\('aria-label', 'Edit ' \+ todo\.itemName\)/, 'an accessible edit action');
   assertPageMatches(/\$\('todo-item-name'\)\.value = todo\.itemName/, 'the item name loaded into the form');
   assertPageMatches(/\$\('todo-viewer'\)\.value = todo\.viewer \|\| ''/, 'the viewer loaded into the form');

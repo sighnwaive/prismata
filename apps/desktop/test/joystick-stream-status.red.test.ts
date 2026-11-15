@@ -289,15 +289,14 @@ test('a refreshed session and confirmed reconnect refresh the snapshot and fence
   await harness.runtime.shutdown();
 });
 
-test('the desktop shell visibly presents checking, live, offline, ending-soon, and unknown stream states', () => {
+test('the desktop shell hides whisper and stream status copy while retaining live-status updates', () => {
   const html = renderShellPage('ready', 'Prismata desktop');
-  assert.match(html, /Joystick stream status/i);
-  assert.match(html, /checking/i);
-  assert.match(html, /live/i);
-  assert.match(html, /offline/i);
-  assert.match(html, /ending soon/i);
-  assert.match(html, /unknown/i);
-  assert.match(html, /aria-live="polite"/);
+  assert.doesNotMatch(html, /Private thank-you whispers/);
+  assert.doesNotMatch(html, /Whispers run only while Prismata is running and connected/);
+  assert.doesNotMatch(html, /Gateway connection requires stream:read/);
+  assert.doesNotMatch(html, /Gift-recipient whispers are disabled/);
+  assert.doesNotMatch(html, /Connection unavailable|Connected to Joystick events|No whisper attempts yet/);
+  assert.doesNotMatch(html, /Joystick stream status/);
   assert.match(html, /joystickWhispers\.onStatusChanged/);
 });
 
@@ -343,12 +342,12 @@ test('a late initial shell status cannot overwrite a newer pushed live status', 
   const offlineStatus = {
     connection: { state: 'unavailable' },
     delivery: { state: 'idle' },
-    stream: { state: 'offline' },
+    stream: { state: 'offline', viewerCount: 0 },
   };
   const liveStatus = {
     connection: { state: 'connected' },
     delivery: { state: 'idle' },
-    stream: { state: 'live' },
+    stream: { state: 'live', viewerCount: 27 },
   };
   const settings = Object.fromEntries(['followed', 'subscribed', 'resubscribed', 'giftSender']
     .map((rule) => [rule, { enabled: false, message: '' }]));
@@ -411,12 +410,13 @@ test('a late initial shell status cannot overwrite a newer pushed live status', 
   assert.equal(typeof publishStatus, 'function');
 
   publishStatus!(liveStatus);
-  assert.equal(elements.get('joystick-stream-status')?.textContent, 'Live');
+  assert.equal(elements.get('panel-viewer-count')?.textContent, '27');
   resolveInitialStatus(offlineStatus);
   for (let index = 0; index < 8; index += 1) await Promise.resolve();
 
-  assert.equal(elements.get('joystick-stream-status')?.textContent, 'Live',
+  assert.equal(elements.get('panel-viewer-count')?.textContent, '27',
     'the older initial offline response must not replace the newer pushed live status');
+  assert.equal(elements.has('joystick-stream-status'), false, 'the removed stream status is not rendered');
 });
 
 test('the preload status boundary carries only a credential-free stream state', async () => {

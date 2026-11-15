@@ -50,7 +50,7 @@ test('direct message IPC and UI wiring are narrow and independent from reminders
   const firstPanel = page.indexOf('<section class="empty-panel"');
   const directMessagePanel = page.indexOf('<section aria-label="Direct message">');
   const streamActivityPanel = page.indexOf('<section aria-label="Stream activity">');
-  const automationPanel = page.indexOf('<section aria-labelledby="whisper-heading">');
+  const automationPanel = page.indexOf('<section aria-label="Automations">');
   assert.ok(firstPanel >= 0 && directMessagePanel > firstPanel && directMessagePanel < automationPanel,
     'Direct message should be the second top-level panel, immediately after the header panel');
   assert.ok(streamActivityPanel > directMessagePanel && streamActivityPanel < automationPanel,

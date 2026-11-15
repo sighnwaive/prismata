@@ -14,33 +14,48 @@ test('reminder message pool controls are hidden as one block for coin-flip', () 
   assert.match(page, /onchange = \(\) => setReminderMessageVisibility\(\$\('reminder-task'\)\.value\)/);
 });
 
-test('reminder message pool supports ordered add/remove editing and requires a nonblank message', () => {
+test('reminder message pool keeps its first message and supports ordered add/remove editing', () => {
   const page = renderShellPage('offline', 'Prismata');
 
   assert.match(page, /function renderReminderMessages\(messages\)/);
   assert.match(page, /values\.forEach\(\(message, index\)/);
   assert.match(page, /messages\.push\(''\)/);
+  assert.match(page, /field\.append\(label, textarea\); row\.append\(field\); if \(index > 0\)/);
   assert.match(page, /next\.splice\(index, 1\)/);
   assert.match(page, /messages\.length >= 10/);
   assert.match(page, /Add at least one custom message/);
 });
 
-test('reminder UI has a manual test button and reports success or failure without saving', () => {
+test('reminder editor omits its test button while reminder rows retain test-send actions', () => {
   const page = renderShellPage('offline', 'Prismata');
-  assert.match(page, /id="reminder-test"[^>]*>Test reminder<\/button>/);
-  assert.match(page, /async function testReminder\(\)/);
-  assert.match(page, /await reminder\.test\(/);
-  assert.match(page, /Reminder sent\./);
-  assert.match(page, /Unable to send reminder/);
-  assert.match(page, /\$\('reminder-test'\)\.onclick = testReminder/);
+  assert.doesNotMatch(page, /id="reminder-test"|>Test reminder<\/button>/);
+  assert.match(page, /async function testReminderForId\(id\)/);
+  assert.match(page, /await reminder\.testRecord\(id\)/);
+  assert.match(page, /createReminderIconButton\('send'/);
 });
 
-test('reminder UI renders the multi-reminder list and CRUD actions', () => {
+test('reminder UI renders per-reminder toggles and icon-based CRUD actions', () => {
   const page = renderShellPage('offline', 'Prismata');
   assert.match(page, /id="reminder-list"/);
+  assert.doesNotMatch(page, /Scheduled Joystick messages/);
+  assert.doesNotMatch(page, /Create scheduled reminders and rotate through a pool of custom messages in order/);
+  assert.doesNotMatch(page, /id="reminder-list-status"/);
+  assert.doesNotMatch(page, /id="reminder-enabled"|Reminder enabled/);
+  assert.match(page, /let editingReminderEnabled = false/);
+  assert.match(page, /editingReminderEnabled = settings\?\.enabled === true/);
+  assert.match(page, /enabled: editingReminderEnabled/);
+  assert.match(page, /renderReminder\(settings \|\| \{ enabled: false,/);
+  assert.match(page, /task: 'custom-message', message: '', schedule: 'hourly'/);
   assert.match(page, /id="reminder-add"[^>]*>Add reminder<\/button>/);
-  assert.match(page, /label === 'Edit'/);
-  assert.match(page, /label === 'Delete'/);
+  assert.match(page, /role', 'switch'/);
+  assert.match(page, /aria-checked', String\(record\.enabled\)/);
+  assert.match(page, /metadata\.textContent = scheduleLabel\(record\)/);
+  assert.doesNotMatch(page, /scheduleLabel\(record\) \+ ' · ' \+ \(record\.enabled \? 'Enabled' : 'Disabled'\)/);
+  assert.match(page, /async function toggleReminder\(record, button\)/);
+  assert.match(page, /await reminder\.updateRecord\(record\.id, \{ \.\.\.record, enabled \}\)/);
+  assert.match(page, /createReminderIconButton\('edit'/);
+  assert.match(page, /createReminderIconButton\('delete'/);
+  assert.match(page, /createReminderIconButton\('send'/);
   assert.match(page, /testReminderForId/);
   assert.match(page, /confirm\('Delete this reminder\?'\)/);
   assert.match(page, /reminder\.create/);

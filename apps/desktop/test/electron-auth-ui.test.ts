@@ -10,7 +10,9 @@ const joystickLogoPath = new URL('../electron/assets/joysticktv-logo-simple-dark
 const joystickLogo = readFileSync(joystickLogoPath);
 
 test('desktop shell visibly renders Joystick authentication controls and states', () => {
-  assert.match(page, /<div class="shell">\s*<section class="empty-panel" aria-label="Empty panel"><div class="panel-bar"><span class="panel-viewers"[^>]*><svg[^>]*aria-hidden="true"><path[^>]*><\/path><\/svg><span id="panel-viewer-count">0<\/span><\/span><\/div><div class="empty-panel-controls"><button id="joystick-connect" class="joystick-connect-button" type="button" aria-label="Connect to Joystick" aria-pressed="false"><img class="joystick-logo" src="data:image\/svg\+xml;base64,[^"]+" alt="" aria-hidden="true" \/><span id="panel-live-indicator" class="panel-live-indicator" hidden>LIVE<\/span><\/button><\/div><p id="desktop-error" class="error" role="alert" hidden><\/p><\/section>\s*<section aria-label="Direct message">/);
+  assert.match(page, /<body><div id="desktop-error" class="error-toast" role="alert" aria-live="assertive" hidden><\/div><main><div class="shell">/);
+  assert.match(page, /<section class="empty-panel" aria-label="Empty panel">.*?<\/section>\s*<section aria-label="Direct message">/);
+  assert.match(page, /\.error-toast \{ position: fixed; z-index: 2000; top: 16px;/);
   assert.ok(page.includes(`src="data:image/svg+xml;base64,${joystickLogo.toString('base64')}"`),
     'the Joystick button embeds the Mochi project logo for the isolated data-URL page');
   assert.match(joystickLogo.toString('utf8'), /fill="#76E1F0"/,
@@ -70,7 +72,7 @@ test('desktop shell visibly renders Joystick authentication controls and states'
   assert.match(page, /advertised-address/);
   assert.match(page, /Retry advertising/);
   assert.match(page, /Advertised address/);
-  assert.match(page, /Scheduled Joystick message/);
+  assert.match(page, /<section aria-label="Reminders">/);
   assert.match(page, /Send a custom message/);
   assert.match(page, /Flip a coin/);
   assert.match(page, /id="reminder-task"/);
@@ -81,11 +83,11 @@ test('desktop shell visibly renders Joystick authentication controls and states'
   assert.match(page, /Every X minutes/);
   assert.match(page, /Every hour/);
   assert.match(page, /Every day at a selected local time/);
-  assert.match(page, /Reminder enabled/);
+  assert.doesNotMatch(page, /id="reminder-enabled"|Reminder enabled/);
 });
 
-test('desktop shell renders the actionable NO_ADDRESS message without replacing it', () => {
-  assert.match(page, /status\.lanError \? status\.lanError\.message : status\.lanEnabled/);
+test('desktop shell surfaces LAN failures through the fixed error toast', () => {
+  assert.match(page, /const statusError = status\.discoveryError \|\| status\.lanError\?\.message; if \(statusError\) \{ error\.hidden = false; error\.textContent = statusError; \}/);
   assert.doesNotMatch(page, /status\.lanError\.message \+ ' Retry LAN access\.'/);
 });
 

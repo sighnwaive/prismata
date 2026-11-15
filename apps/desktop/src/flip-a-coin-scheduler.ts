@@ -52,7 +52,7 @@ function scheduleBucketStart(at: Date, settings: ReminderSettings): Date {
 
 export function createFlipACoinScheduler({
   send,
-  getSettings = () => defaultReminderSettings,
+  getSettings = () => [],
   intervalMs = 1_000,
   now = () => new Date(),
   setInterval: setIntervalFn = globalThis.setInterval,

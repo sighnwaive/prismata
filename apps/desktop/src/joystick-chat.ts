@@ -132,13 +132,13 @@ export function createAuthenticatedJoystickChatSender(input: {
   const log = input.log ?? (() => undefined);
   return async (payload: FlipACoinMessage): Promise<void> => {
     if (!isJoystickStreamLive(input.getStreamState)) {
-      log('Flip a Coin skipped: stream is not live');
+      log('Joystick chat send skipped: stream is not live');
       if (input.throwOnError) throw new Error('Joystick chat is only available while your stream is live');
       return;
     }
     const accessToken = input.getAccessToken();
     if (!accessToken) {
-      log('Flip a Coin skipped: authenticated Joystick session unavailable');
+      log('Joystick chat send skipped: authenticated session unavailable');
       if (input.throwIfUnavailable) throw new Error('Authenticated Joystick session unavailable');
       return;
     }

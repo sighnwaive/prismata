@@ -53,7 +53,21 @@ test('authenticated sender uses the session token and safely skips without a ses
 
   await sender({ message: 'Flip a Coin' });
   assert.deepEqual(sent, []);
-  assert.deepEqual(diagnostics, ['Flip a Coin skipped: authenticated Joystick session unavailable']);
+  assert.deepEqual(diagnostics, ['Joystick chat send skipped: authenticated session unavailable']);
+});
+
+test('stream-gate diagnostics do not falsely identify a reminder as Flip a Coin', async () => {
+  const diagnostics: string[] = [];
+  const sender = createAuthenticatedJoystickChatSender({
+    getAccessToken: () => 'session-token',
+    getStreamState: () => 'offline',
+    log: (message) => diagnostics.push(message),
+  });
+
+  await sender({ message: 'My custom reminder' });
+
+  assert.deepEqual(diagnostics, ['Joystick chat send skipped: stream is not live']);
+  assert.doesNotMatch(diagnostics[0]!, /Flip a Coin/);
 });
 
 test('authenticated public sends publish to chat history only after successful delivery', async () => {

@@ -20,9 +20,12 @@ test('coin-flip task maps injected random outcomes to exact messages', async () 
   ]);
 });
 
-test('defaults to hourly wall-clock cadence and sends once per hour bucket', async () => {
+test('configured reminders use hourly wall-clock cadence and send once per hour bucket', async () => {
   const sent: unknown[] = [];
-  const scheduler = createFlipACoinScheduler({ send: (payload) => { sent.push(payload); } });
+  const scheduler = createFlipACoinScheduler({
+    send: (payload) => { sent.push(payload); },
+    getSettings: () => ({ enabled: true, task: 'custom-message', message: 'Flip a Coin', schedule: 'hourly', intervalMinutes: 5, dailyTime: '09:00' }),
+  });
 
   await scheduler.tick(new Date(2026, 9, 14, 11, 59, 59));
   assert.deepEqual(sent, []);
@@ -41,6 +44,15 @@ test('defaults to hourly wall-clock cadence and sends once per hour bucket', asy
   ]);
 });
 
+test('scheduler does not invent a reminder when no settings or records are configured', async () => {
+  const sent: unknown[] = [];
+  const scheduler = createFlipACoinScheduler({ send: (payload) => { sent.push(payload); } });
+
+  await scheduler.tick(new Date(2026, 9, 14, 12, 0, 0));
+
+  assert.deepEqual(sent, []);
+});
+
 test('background polling is injectable and stops cleanly', async () => {
   const sent: unknown[] = [];
   let currentTime = new Date(2026, 9, 14, 12, 0, 0);
@@ -48,6 +60,7 @@ test('background polling is injectable and stops cleanly', async () => {
   let stopped = false;
   const scheduler = createFlipACoinScheduler({
     send: (payload) => { sent.push(payload); },
+    getSettings: () => ({ enabled: true, task: 'custom-message', message: 'Flip a Coin', schedule: 'hourly', intervalMinutes: 5, dailyTime: '09:00' }),
     now: () => currentTime,
     setInterval: (callback) => { poll = callback; return 1 as ReturnType<typeof globalThis.setInterval>; },
     clearInterval: () => { stopped = true; },
