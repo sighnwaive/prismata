@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import afterPack from '../electron/after-pack.mjs';
-import { resolvePackagedEsbuildBinary } from '../electron/esbuild-runtime.mjs';
+import {
+  getEsbuildBinarySubpath,
+  resolvePackagedEsbuildBinary,
+} from '../electron/esbuild-runtime.mjs';
 
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')) as {
   scripts: Record<string, string>;
@@ -49,6 +52,12 @@ test('packaged esbuild binary resolves from tsx dependencies instead of the app 
   const binaryPath = resolvePackagedEsbuildBinary(new URL('../electron/main.mjs', import.meta.url));
 
   assert.ok(existsSync(binaryPath), `resolved esbuild binary exists: ${binaryPath}`);
+});
+
+test('uses esbuild executable paths for Windows and Unix-like platforms', () => {
+  assert.equal(getEsbuildBinarySubpath('win32'), 'esbuild.exe');
+  assert.equal(getEsbuildBinarySubpath('linux'), 'bin/esbuild');
+  assert.equal(getEsbuildBinarySubpath('darwin'), 'bin/esbuild');
 });
 
 test('production workflow builds on native Windows, Linux, and macOS runners', async () => {
