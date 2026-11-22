@@ -23,7 +23,9 @@ test('desktop shell visibly renders Joystick authentication controls and states'
   assert.match(page, /\.shell > section:first-child \{ grid-column: 1 \/ -1; \}/);
   assert.match(page, /\.shell \{ width: min\(900px, 100%\);[^}]*grid-template-columns: minmax\(0, 1fr\);/);
   assert.match(page, /@media \(min-width: 1200px\) \{ \.shell \{ width: min\(1800px, 100%\); grid-template-columns: 900px minmax\(0, 900px\); \} \}/);
-  assert.match(page, /\.panel-bar \{ height: 60px;[^}]*justify-content: flex-end/);
+  assert.match(page, /\.panel-bar \{ height: 60px;[^}]*justify-content: space-between/);
+  assert.match(page, /<div class="panel-bar"><span class="panel-version">v0\.1\.3<\/span><span class="panel-viewers"/,
+    'the version is on the left and the viewer count is right-aligned');
   assert.match(page, /\.joystick-connect-button \{[^}]*width: 4\.5rem; height: 4\.5rem;[^}]*border-radius: 16px; background: #111827/);
   assert.match(page, /\.joystick-connect-button\.connected \{ background: #0c0c0c; \}/);
   assert.match(page, /\.joystick-logo \{[^}]*filter: grayscale\(1\); transition: filter 120ms ease; \}/);
