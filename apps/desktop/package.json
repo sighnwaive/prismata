@@ -3,7 +3,7 @@
   "description": "Prismata desktop app",
   "author": "Prismata",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "desktopName": "tv.prismata.desktop",
   "main": "electron/main.mjs",
