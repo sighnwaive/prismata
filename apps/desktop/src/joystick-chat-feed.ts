@@ -57,7 +57,8 @@ export function parseJoystickChatMessage(value: unknown): JoystickChatMessage | 
   const author = event.data.author;
   const message = typeof event.data.text === 'string' ? event.data.text
     : typeof event.data.message === 'string' ? event.data.message
-      : isRecord(event.data.message) && typeof event.data.message.text === 'string' ? event.data.message.text : undefined;
+      : isRecord(event.data.message) && typeof event.data.message.text === 'string' ? event.data.message.text
+        : typeof event.text === 'string' ? event.text : undefined;
   const name = singleLine(author.display_name ?? author.username ?? author.name, 80);
   const text = singleLine(message, 500);
   if (!name || !text) return null;

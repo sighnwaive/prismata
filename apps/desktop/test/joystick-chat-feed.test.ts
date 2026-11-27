@@ -34,6 +34,25 @@ test('live chat parser accepts only public Joystick v2 messages and normalizes t
     'fallback colors are keyed by normalized username, not current display name');
 });
 
+test('live chat parser accepts top-level Joystick v2 text with public author metadata in data', () => {
+  assert.deepEqual(parseJoystickChatMessage({
+    v: 2,
+    type: 'new_message',
+    topic: 'chat.message',
+    id: 'top-level-text',
+    text: '!info',
+    data: {
+      visibility: 'public',
+      author: { username: 'viewer-1', display_name: 'Viewer', badges: { bot: false } },
+    },
+  }), {
+    id: 'top-level-text',
+    author: 'Viewer',
+    text: '!info',
+    authorColor: generatedAuthorColor('viewer-1'),
+  });
+});
+
 test('live chat feed keeps only the newest 26 unique messages and safely publishes snapshots', () => {
   const feed = createJoystickChatFeed();
   let received: Array<Array<{ id: string; author: string; text: string }>> = [];

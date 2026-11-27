@@ -1,4 +1,5 @@
 import { fetchWithJoystickDiagnostics, type JoystickTrafficDiagnostic } from './joystick-traffic-diagnostics.js';
+import { interpolateMessageTemplate } from './message-template.js';
 import { isJoystickStreamLive, type JoystickStreamStateReader } from './joystick-stream-state.js';
 
 export const JOYSTICK_WHISPERS_ENDPOINT = 'https://api.joystick.tv/api/v1/chat/whispers';
@@ -99,7 +100,14 @@ export function createJoystickWhisperAutomation(input: {
 }) {
   const attempted = new Set<string>();
 
-  async function attempt(eventId: string, ruleName: keyof WhisperRules, rule: WhisperRule, username: string, errors: unknown[]) {
+  async function attempt(
+    eventId: string,
+    ruleName: keyof WhisperRules,
+    rule: WhisperRule,
+    username: string,
+    errors: unknown[],
+    sender?: string,
+  ) {
     const key = JSON.stringify([eventId, ruleName, username.trim().toLowerCase()]);
     if (!isJoystickStreamLive(input.getStreamState)) return;
     if (input.attemptStore) {
@@ -117,7 +125,10 @@ export function createJoystickWhisperAutomation(input: {
     }
     if (!isJoystickStreamLive(input.getStreamState)) return;
     try {
-      await input.sendWhisper({ username, text: rule.message });
+      await input.sendWhisper({
+        username,
+        text: interpolateMessageTemplate(rule.message, { sender }),
+      });
     } catch (error) {
       errors.push(error);
     }
@@ -137,6 +148,8 @@ export function createJoystickWhisperAutomation(input: {
       if (!route) return;
 
       const errors: unknown[] = [];
+      const data = isRecord(event.data) ? event.data : undefined;
+      const sender = isUsername(data?.who) ? data.who : undefined;
       if (route === 'gifted_subscriptions') {
         if (validRule(input.rules.subscribed) && input.resolveGiftRecipients) {
           try {
@@ -144,7 +157,7 @@ export function createJoystickWhisperAutomation(input: {
             if (resolution?.status === 'complete' && Array.isArray(resolution.usernames)
               && resolution.usernames.every(isUsername)) {
               for (const username of new Set(resolution.usernames)) {
-                await attempt(event.id, 'subscribed', input.rules.subscribed, username, errors);
+                await attempt(event.id, 'subscribed', input.rules.subscribed, username, errors, sender);
               }
             }
           } catch (error) {
@@ -153,14 +166,14 @@ export function createJoystickWhisperAutomation(input: {
           }
         }
 
-        const sender = actorUsername(event);
-        if (sender && validRule(input.rules.giftSender)) {
-          await attempt(event.id, 'giftSender', input.rules.giftSender, sender, errors);
+        const username = actorUsername(event);
+        if (username && validRule(input.rules.giftSender)) {
+          await attempt(event.id, 'giftSender', input.rules.giftSender, username, errors, sender);
         }
       } else {
         const username = actorUsername(event);
         const rule = input.rules[route];
-        if (username && validRule(rule)) await attempt(event.id, route, rule, username, errors);
+        if (username && validRule(rule)) await attempt(event.id, route, rule, username, errors, sender);
       }
 
       if (errors.length > 0) throw errors[0];

@@ -7,6 +7,7 @@ import {
   normalizeJoystickChatAutomationSettings,
   type JoystickChatAutomationSettings,
 } from '../src/joystick-chat-automations.js';
+import { interpolateMessageTemplate } from '../src/message-template.js';
 import { isJoystickStreamLive, type JoystickStreamState } from '../src/joystick-stream-state.js';
 
 export type JoystickWhisperRuleName = keyof JoystickWhisperSettings;
@@ -18,7 +19,14 @@ export type JoystickWhisperStatus = {
   stream: { state: JoystickStreamState; viewerCount: number };
 };
 
-type AuthSession = { state: 'authenticated'; accessToken: string; grantedPermissions: string[] };
+type AuthSession = {
+  state: 'authenticated';
+  accessToken: string;
+  grantedPermissions: string[];
+  login?: string;
+  userId?: string;
+  identity?: { id?: string; login?: string };
+};
 type GatewayInput = {
   getAccessToken: () => string | undefined;
   getGrantedPermissions: () => readonly string[];
@@ -40,6 +48,9 @@ type StreamSnapshot = {
 
 const requiredPermissions = ['stream:read', 'chat:whisper:write'] as const;
 const requiredDropInChatPermissions = ['stream:read', 'chat:write'] as const;
+const requiredSlashCommandPermissions = ['stream:read', 'chat:write'] as const;
+const SLASH_COMMAND_COOLDOWN_MS = 5_000;
+const RECENT_SLASH_COMMAND_EVENT_LIMIT = 500;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -150,6 +161,8 @@ export function createJoystickWhisperRuntime(input: {
   let activeSnapshot: StreamSnapshot | undefined;
   const statusListeners = new Set<(status: JoystickWhisperStatus) => void>();
   const handledDropInEventIds = new Set<string>();
+  const handledSlashCommandEventIds = new Set<string>();
+  const slashCommandCooldowns = new Map<string, number>();
 
   const publish = () => {
     for (const listener of statusListeners) {
@@ -297,16 +310,112 @@ export function createJoystickWhisperRuntime(input: {
     const automation = normalizeJoystickChatAutomationSettings(settings.settings.joystickChatAutomations).dropIn;
     if (!automation.enabled || automation.messages.length === 0) return;
 
+    const data = isRecord(event.data) ? event.data : {};
+    const variables: Record<string, string | number | undefined> = {
+      sender: typeof data.who === 'string' && data.who.trim() ? data.who : undefined,
+      number_of_viewers: isViewerCount(data.number_of_viewers) ? data.number_of_viewers : undefined,
+      text: typeof event.text === 'string' ? event.text : undefined,
+      occurred_at: typeof event.occurred_at === 'string' ? event.occurred_at : undefined,
+    };
     for (const message of automation.messages) {
       const session = currentSession();
       if (closed || !session || !requiredDropInChatPermissions.every((permission) => session.grantedPermissions.includes(permission))
         || !isJoystickStreamLive(() => status.stream.state)) return;
       try {
-        await input.sendPublicChat(session.accessToken, message);
+        await input.sendPublicChat(session.accessToken, interpolateMessageTemplate(message, variables));
       } catch {
         // A public send may have reached Joystick even if confirmation failed. Do not retry this event.
         return;
       }
+    }
+  }
+
+  function normalizedLogin(value: unknown): string {
+    return typeof value === 'string' ? value.trim().toLocaleLowerCase('en-US') : '';
+  }
+
+  function stableIdentity(value: unknown): string {
+    if (typeof value !== 'string' && typeof value !== 'number') return '';
+    return String(value).trim();
+  }
+
+  function streamerMessageMatch(author: Record<string, unknown>, session: AuthSession): boolean | undefined {
+    const authorId = [author.user_id, author.userId, author.id].map(stableIdentity).find(Boolean) ?? '';
+    const sessionId = [session.identity?.id, session.userId].map(stableIdentity).find(Boolean) ?? '';
+    if (authorId && sessionId) return authorId === sessionId;
+
+    const sessionLogin = normalizedLogin(session.identity?.login) || normalizedLogin(session.login);
+    const authorLogin = normalizedLogin(author.login) || normalizedLogin(author.username);
+    if (!sessionLogin || !authorLogin) return undefined;
+    return sessionLogin === authorLogin;
+  }
+
+  async function handleSlashCommand(event: Record<string, unknown>): Promise<void> {
+    if (!input.sendPublicChat || event.v !== 2 || event.type !== 'new_message' || event.topic !== 'chat.message'
+      || !isRecord(event.data) || event.data.visibility !== 'public' || !isRecord(event.data.author)) return;
+    const author = event.data.author;
+    if (!isRecord(author.badges) || author.badges.bot !== false) return;
+    const eventId = event.id;
+    if (typeof eventId !== 'string' || !eventId.trim() || eventId.length > 512) return;
+    const eventIdKey = eventId.trim();
+    if (handledSlashCommandEventIds.has(eventIdKey)) return;
+    // Claim the bounded event ID synchronously before local settings can yield,
+    // so replays with a different command token cannot race this lookup.
+    handledSlashCommandEventIds.add(eventIdKey);
+    if (handledSlashCommandEventIds.size > RECENT_SLASH_COMMAND_EVENT_LIMIT) {
+      handledSlashCommandEventIds.delete(handledSlashCommandEventIds.values().next().value!);
+    }
+
+    const message = typeof event.data.text === 'string' ? event.data.text
+      : typeof event.data.message === 'string' ? event.data.message
+        : isRecord(event.data.message) && typeof event.data.message.text === 'string'
+          ? event.data.message.text
+          : typeof event.text === 'string' ? event.text : '';
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage) return;
+
+    const identitySession = currentSession();
+    if (!identitySession) return;
+    if (streamerMessageMatch(author, identitySession) === undefined) return;
+
+    const token = trimmedMessage.split(/\s+/, 1)[0] ?? '';
+    const settings = await input.desktopSettings.getSettings();
+    if (closed) return;
+    const slashCommands = normalizeJoystickChatAutomationSettings(settings.settings.joystickChatAutomations).slashCommands
+      ?? { prefix: '!', commands: [] };
+    if (!token.startsWith(slashCommands.prefix) || token.length <= slashCommands.prefix.length) return;
+    const commandName = token.slice(slashCommands.prefix.length).toLocaleLowerCase('en-US');
+    const command = slashCommands.commands.find((entry) => entry.enabled
+      && entry.name.toLocaleLowerCase('en-US') === commandName);
+    if (!command) return;
+
+    const current = currentSession();
+    if (!current || streamerMessageMatch(author, current) === undefined
+      || !requiredSlashCommandPermissions.every((permission) => current.grantedPermissions.includes(permission))
+      || !isJoystickStreamLive(() => status.stream.state)) return;
+    const latestSession = currentSession();
+    if (!latestSession || streamerMessageMatch(author, latestSession) === undefined
+      || !requiredSlashCommandPermissions.every((permission) => latestSession.grantedPermissions.includes(permission))
+      || !isJoystickStreamLive(() => status.stream.state)) return;
+
+    const commandKey = command.name.toLocaleLowerCase('en-US');
+    const now = (input.now ?? Date.now)();
+    const lastAttempt = slashCommandCooldowns.get(commandKey);
+    if (lastAttempt !== undefined && now - lastAttempt < SLASH_COMMAND_COOLDOWN_MS) return;
+    // The cooldown starts at the accepted attempt, even when delivery fails.
+    slashCommandCooldowns.set(commandKey, now);
+    if (slashCommandCooldowns.size > RECENT_SLASH_COMMAND_EVENT_LIMIT) {
+      slashCommandCooldowns.delete(slashCommandCooldowns.keys().next().value!);
+    }
+    const sender = typeof author.display_name === 'string' && author.display_name.trim()
+      ? author.display_name
+      : typeof author.username === 'string' && author.username.trim() ? author.username : undefined;
+    try {
+      await input.sendPublicChat(latestSession.accessToken, interpolateMessageTemplate(command.response, {
+        sender,
+      }));
+    } catch {
+      // Delivery may have succeeded despite an error. Do not automatically retry.
     }
   }
 
@@ -337,6 +446,9 @@ export function createJoystickWhisperRuntime(input: {
     if (eventRecord?.type === 'stream_dropped_in'
       && requiredDropInChatPermissions.every((permission) => session.grantedPermissions.includes(permission))) {
       try { await handleDropInChat(eventRecord); } catch { /* Configuration/storage errors do not affect gateway health. */ }
+    }
+    if (eventRecord) {
+      try { await handleSlashCommand(eventRecord); } catch { /* Settings and delivery errors must not affect gateway health. */ }
     }
     if (!requiredPermissions.every((permission) => session.grantedPermissions.includes(permission))) return;
 

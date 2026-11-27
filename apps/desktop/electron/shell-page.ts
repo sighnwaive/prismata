@@ -71,7 +71,7 @@ button.error-toast-dismiss:hover { background: rgba(255,255,255,.12); }
   <section class="empty-panel" aria-label="Empty panel"><div class="panel-bar"><span class="panel-version">v${escapeHtml(appVersion)}</span><span class="panel-viewers" role="status" aria-label="Current viewer count" aria-live="polite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-5 0-9.3 3.1-11 7 1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z"></path></svg><span id="panel-viewer-count">0</span></span></div><div class="empty-panel-controls"><button id="joystick-connect" class="joystick-connect-button" type="button" aria-label="Connect to Joystick" aria-pressed="false"><img class="joystick-logo" src="${joystickLogoDataUri}" alt="" aria-hidden="true" /><span id="panel-live-indicator" class="panel-live-indicator" hidden>LIVE</span></button></div></section>
     <section aria-label="Direct message"><p class="eyebrow">Direct message</p><div id="joystick-chat-feed" class="chat-feed" role="log" aria-label="Recent stream chat messages" aria-live="polite" aria-relevant="additions text"><p class="muted">Waiting for public chat messages…</p></div><label class="label" for="direct-message-input">Message</label><div class="direct-message-composer"><textarea id="direct-message-input" maxlength="500" rows="3" autocomplete="off"></textarea><button id="direct-message-send" type="button">Send Message</button></div><p id="direct-message-status" class="muted" aria-live="polite"></p></section>
    <section aria-label="Stream activity"><div class="activity-tabs" role="tablist" aria-label="Stream activity"><button id="todo-tab" type="button" role="tab" aria-selected="true" aria-controls="todo-panel" tabindex="0">TODOs</button><button id="tip-history-tab" type="button" role="tab" aria-selected="false" aria-controls="tip-history-panel" tabindex="-1">Tip History</button></div><div id="todo-panel" role="tabpanel" aria-labelledby="todo-tab" tabindex="0"><section aria-label="Task list"><p class="eyebrow">Task list</p><form id="todo-form" class="todo-form" novalidate><div><label class="label" for="todo-item-name">Item name</label><input id="todo-item-name" name="itemName" type="text" maxlength="200" autocomplete="off" required /></div><div><label class="label" for="todo-viewer">Viewer (optional)</label><input id="todo-viewer" name="viewer" type="text" maxlength="100" autocomplete="off" /></div><div class="wide"><label class="label" for="todo-note">Note (optional)</label><textarea id="todo-note" name="note" rows="2" maxlength="2000"></textarea></div><div class="wide actions"><button id="todo-add" type="submit">Save TODO</button></div></form><p id="todo-status" class="muted" role="status" aria-live="polite">Loading TODOs…</p><div id="todo-list" role="list" aria-live="polite" aria-relevant="additions removals text"><p class="muted">Loading TODOs…</p></div></section></div><section id="tip-history-panel" role="tabpanel" aria-labelledby="tip-history-tab" tabindex="0" aria-label="Tip History" hidden><p class="eyebrow">Tip History</p><div id="tip-history-list" role="list" aria-live="polite" aria-relevant="additions removals text"><p class="muted">Loading Tip History…</p></div><nav id="tip-history-pagination" class="tip-history-pagination" aria-label="Tip History pages" hidden><button id="tip-history-previous" class="secondary" type="button">Previous</button><span id="tip-history-page" role="status" aria-live="polite"></span><button id="tip-history-next" class="secondary" type="button">Next</button></nav></section></section>
-   <section aria-label="Automations"><p class="eyebrow">Automations</p><div class="whisper-rule"><label for="whisper-followed-enabled"><input id="whisper-followed-enabled" type="checkbox" role="switch" />New follower whisper</label><div><label class="label" for="whisper-followed-message">New follower message</label><textarea id="whisper-followed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-subscribed-enabled"><input id="whisper-subscribed-enabled" type="checkbox" role="switch" />New subscription / gift recipients whisper</label><div><label class="label" for="whisper-subscribed-message">New subscription message</label><textarea id="whisper-subscribed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-resubscribed-enabled"><input id="whisper-resubscribed-enabled" type="checkbox" role="switch" />Resubscription whisper</label><div><label class="label" for="whisper-resubscribed-message">Resubscription message</label><textarea id="whisper-resubscribed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-gift-sender-enabled"><input id="whisper-gift-sender-enabled" type="checkbox" role="switch" />Gift sender whisper</label><div><label class="label" for="whisper-gift-sender-message">Gift sender message</label><textarea id="whisper-gift-sender-message" rows="2" maxlength="500"></textarea></div></div><hr /><h3 id="drop-in-chat-heading" class="label">Drop-in public chat</h3><p class="muted">Send up to 10 messages in order when a viewer drops in. Requires chat:write and a live stream.</p><label for="drop-in-chat-enabled"><input id="drop-in-chat-enabled" type="checkbox" role="switch" />Drop-in chat messages</label><div id="drop-in-message-list" role="list" aria-label="Drop-in public chat messages"></div><div class="actions"><button id="drop-in-message-add" class="secondary" type="button">Add message</button></div></section>
+   <section aria-label="Automations"><p class="eyebrow">Automations</p><div class="whisper-rule"><label for="whisper-followed-enabled"><input id="whisper-followed-enabled" type="checkbox" role="switch" />New follower whisper</label><div><label class="label" for="whisper-followed-message">New follower message</label><textarea id="whisper-followed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-subscribed-enabled"><input id="whisper-subscribed-enabled" type="checkbox" role="switch" />New subscription / gift recipients whisper</label><div><label class="label" for="whisper-subscribed-message">New subscription message</label><textarea id="whisper-subscribed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-resubscribed-enabled"><input id="whisper-resubscribed-enabled" type="checkbox" role="switch" />Resubscription whisper</label><div><label class="label" for="whisper-resubscribed-message">Resubscription message</label><textarea id="whisper-resubscribed-message" rows="2" maxlength="500"></textarea></div></div><div class="whisper-rule"><label for="whisper-gift-sender-enabled"><input id="whisper-gift-sender-enabled" type="checkbox" role="switch" />Gift sender whisper</label><div><label class="label" for="whisper-gift-sender-message">Gift sender message</label><textarea id="whisper-gift-sender-message" rows="2" maxlength="500"></textarea></div></div><hr /><h3 id="drop-in-chat-heading" class="label">Drop-in public chat</h3><p class="muted">Send up to 10 messages in order when a viewer drops in. Requires chat:write and a live stream.</p><label for="drop-in-chat-enabled"><input id="drop-in-chat-enabled" type="checkbox" role="switch" />Drop-in chat messages</label><div id="drop-in-message-list" role="list" aria-label="Drop-in public chat messages"></div><div class="actions"><button id="drop-in-message-add" class="secondary" type="button">Add message</button></div><hr /><h3 class="label">Slash commands</h3><label class="label" for="slash-command-prefix">Global prefix</label><input id="slash-command-prefix" type="text" maxlength="1" value="!" /><div id="slash-command-list" role="list" aria-label="Slash commands"></div><div class="actions"><button id="slash-command-add" class="secondary" type="button">Add command</button></div><p id="slash-command-status" class="muted" role="status" aria-live="polite"></p></section>
    <section aria-label="Reminders"><p class="eyebrow">Reminders</p><div id="reminder-list" role="list" aria-live="polite"><p class="muted">No reminders yet.</p></div><div class="actions"><button id="reminder-add" type="button">Add reminder</button></div><div id="reminder-editor" hidden><hr /><h2 id="reminder-editor-heading">Reminder</h2><label class="label" for="reminder-task">What should Prismata send?</label><select id="reminder-task"><option value="custom-message">Send a custom message</option><option value="coin-flip">Flip a coin</option></select><div id="reminder-message-controls" hidden><p class="muted">Custom messages send in order, then rotate back to the beginning.</p><div id="reminder-message-list" role="list" aria-label="Reminder messages"></div><button id="reminder-message-add" class="secondary" type="button">Add message</button></div><label class="label" for="reminder-schedule">When should it send?</label><select id="reminder-schedule"><option value="interval">Every X minutes</option><option value="hourly" selected>Every hour</option><option value="daily">Every day at a selected local time</option></select><div id="reminder-interval-controls" hidden><label class="label" for="reminder-interval">Interval in minutes (1–59)</label><input id="reminder-interval" type="number" min="1" max="59" step="1" value="5" /><p class="muted">Send this reminder every X minutes, starting at local midnight.</p></div><label class="label" for="reminder-time" id="reminder-time-label">Local time</label><input id="reminder-time" type="time" value="09:00" /><p id="reminder-status" class="muted" aria-live="polite"></p><div class="actions"><button id="reminder-save" type="button">Save reminder</button><button id="reminder-cancel" class="secondary" type="button">Cancel</button></div></div></section>
   <section aria-labelledby="mobile-heading" hidden><div class="lan"><div><p class="eyebrow">Settings</p><h2 id="mobile-heading">Mobile access · LAN status</h2></div><code id="lan-status">${escapeHtml(desktopStatus)}</code></div><p id="lan-detail" class="muted">LAN access is disabled until you enable it.</p><p id="lan-warning" class="error" role="alert" hidden><strong>All-interface binding is enabled.</strong> This can expose Prismata to public or WAN networks. Use host firewall and network controls, and disable it when not needed.</p><div class="actions"><button id="lan-toggle" type="button">Enable LAN access</button><button id="advertising-retry" class="secondary" type="button" hidden>Retry advertising</button></div><label class="label" for="advertised-address">Advertise this interface/address</label><select id="advertised-address" disabled><option>Load eligible interfaces...</option></select><div class="grid" aria-label="LAN connection details"><div><span class="label">Bind host</span><code id="lan-host" class="value">Not available</code></div><div><span class="label">Advertised address</span><code id="advertised-host" class="value">Not available</code></div><div><span class="label">Endpoint</span><code id="endpoint" class="value">Not available</code></div><div><span class="label">Protocol</span><span id="protocol" class="value">HTTPS</span></div><div><span class="label">Discovery</span><span id="discovery" class="value">Stopped</span></div><div><span class="label">Fingerprint</span><code id="fingerprint" class="value">Not available</code></div></div></section>
  <section aria-labelledby="requests-heading" hidden><h2 id="requests-heading">Pending mobile connection requests</h2><p class="muted">Compare the confirmation code shown on the mobile device before explicitly approving access.</p><div id="requests" aria-live="polite"><p class="muted">No pending mobile requests.</p></div></section>
@@ -79,8 +79,49 @@ button.error-toast-dismiss:hover { background: rgba(255,255,255,.12); }
 </div></main><script>
 (() => { const admin = window.prismataDesktop.admin; const auth = window.prismataDesktop.auth; const joystickWhispers = window.prismataDesktop.joystickWhispers; const $ = (id) => document.getElementById(id); const error = $('desktop-error'); const errorMessage = $('desktop-error-message'); let errorToastTimer; const editPencilIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>'; let currentStatus; let authErrorMessage;
 const labels = {'signed-out':'Signed out','opening-browser':'Opening browser','waiting-for-callback':'Waiting for callback',authenticated:'Authenticated',failure:'Authentication failed',offline:'Offline'};
-function text(value) { const node = document.createElement('span'); node.textContent = value; return node.innerHTML; }
-function displayText(value) { return value ? text(value) : 'Unavailable'; }
+ function text(value) { const node = document.createElement('span'); node.textContent = value; return node.innerHTML; }
+ let messageVariableHelpId = 0;
+ function appendMessageVariableDescriptions(target, variables) { const list = document.createElement('ul'); variables.forEach((variable) => { const item = document.createElement('li'); const token = document.createElement('code'); token.textContent = variable.token; item.append(token, document.createTextNode(' — ' + variable.description)); list.append(item); }); target.append(list); }
+ function createMessageVariableInfo(context) {
+   if (!document.head || typeof document.createTextNode !== 'function') return document.createElement('span');
+   const variablesByContext = {
+     whisper: [{ token: '{{sender}}', description: 'The event viewer username associated with this whisper.' }],
+     'drop-in': [
+       { token: '{{sender}}', description: 'The viewer display name or username for this Drop-in.' },
+       { token: '{{number_of_viewers}}', description: 'The viewer count included in the Drop-in event.' },
+       { token: '{{text}}', description: 'The text included with the Drop-in event.' },
+       { token: '{{occurred_at}}', description: 'The timestamp for when the Drop-in event occurred.' },
+     ],
+      'slash-command': [
+        { token: '{{sender}}', description: 'The command sender display name, falling back to their username.' },
+      ],
+   };
+   const variables = variablesByContext[context] || [];
+   if (!document.getElementById('message-variable-help-style')) {
+     const style = document.createElement('style'); style.id = 'message-variable-help-style';
+     style.textContent = '.message-field-heading{display:flex;align-items:center;gap:6px}.message-field-heading .label{margin-bottom:4px}.message-variable-help{position:relative;display:inline-flex;vertical-align:middle;margin-left:2px}.message-variable-help button.message-variable-info{display:inline-flex;align-items:center;justify-content:center;width:26px;min-width:26px;height:26px;min-height:26px;padding:0;border-radius:50%;color:#dbe7ff;background:#26344a}.message-variable-info svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}.message-variable-tooltip{position:absolute;z-index:1001;left:0;bottom:calc(100% + 8px);width:min(320px,80vw);padding:10px 12px;border:1px solid #6387c4;border-radius:8px;background:#10141e;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:.8rem}.message-variable-tooltip ul,.message-variable-dialog-panel ul{margin:0;padding-left:20px}.message-variable-tooltip li,.message-variable-dialog-panel li{margin:4px 0}.message-variable-dialog{position:fixed;z-index:3000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.72)}.message-variable-dialog[hidden],.message-variable-tooltip[hidden]{display:none!important}.message-variable-dialog-panel{width:min(520px,100%);box-sizing:border-box;padding:22px;border:1px solid #6387c4;border-radius:12px;background:#171b24;box-shadow:0 20px 60px rgba(0,0,0,.55)}.message-variable-dialog-panel header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}.message-variable-dialog-panel h2{color:#f3f5f7}';
+     document.head.append(style);
+   }
+   const wrapper = document.createElement('span'); wrapper.className = 'message-variable-help';
+   const button = document.createElement('button'); button.type = 'button'; button.className = 'message-variable-info'; button.setAttribute('aria-label', 'Show available message variables'); button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>';
+   const helpTemplate = document.createElement('template'); helpTemplate.innerHTML = '<span class="message-variable-tooltip" role="tooltip" hidden></span><div class="message-variable-dialog" role="dialog" aria-modal="true" hidden></div>';
+   const tooltip = helpTemplate.content.querySelector('[role="tooltip"]'); const dialog = helpTemplate.content.querySelector('[role="dialog"]');
+   const helpId = 'message-variable-help-' + (++messageVariableHelpId); tooltip.id = helpId; button.setAttribute('aria-describedby', helpId);
+   appendMessageVariableDescriptions(tooltip, variables);
+   const panel = document.createElement('div'); panel.className = 'message-variable-dialog-panel';
+   const header = document.createElement('header'); const heading = document.createElement('h2'); heading.id = helpId + '-heading'; heading.textContent = 'Available message variables';
+   const close = document.createElement('button'); close.type = 'button'; close.className = 'secondary'; close.textContent = 'Close'; close.setAttribute('aria-label', 'Close message variable help');
+   header.append(heading, close); panel.append(header); appendMessageVariableDescriptions(panel, variables); dialog.setAttribute('aria-labelledby', heading.id); dialog.append(panel);
+   let infoHovered = false; let infoFocused = false;
+   const updateTooltip = () => { tooltip.hidden = !(infoHovered || infoFocused); }; const closeDialog = () => { dialog.hidden = true; button.focus(); };
+   button.addEventListener('mouseenter', () => { infoHovered = true; updateTooltip(); }); button.addEventListener('mouseleave', () => { infoHovered = false; updateTooltip(); });
+   button.addEventListener('focus', () => { infoFocused = true; updateTooltip(); }); button.addEventListener('blur', () => { infoFocused = false; updateTooltip(); });
+   button.onclick = () => { tooltip.hidden = true; dialog.hidden = false; close.focus(); };
+   close.onclick = closeDialog; dialog.onclick = (event) => { if (event.target === dialog) closeDialog(); };
+   dialog.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeDialog(); });
+   wrapper.append(button, tooltip, dialog); return wrapper;
+ }
+ function displayText(value) { return value ? text(value) : 'Unavailable'; }
 function hideErrorToast() { if (errorToastTimer !== undefined) { clearTimeout(errorToastTimer); errorToastTimer = undefined; } error.hidden = true; errorMessage.textContent = ''; }
 function showError(message) { if (errorToastTimer !== undefined) clearTimeout(errorToastTimer); errorMessage.textContent = message; error.hidden = false; errorToastTimer = setTimeout(hideErrorToast, 8000); }
 $('desktop-error-dismiss').onclick = hideErrorToast;
@@ -96,7 +137,8 @@ function renderDevices(devices) { $('devices-empty').hidden = devices.length > 0
   async function selectAddress() { try { renderStatus(await admin.setAdvertisedAddress($('advertised-address').value)); await renderInterfaces(); } catch (cause) { showError(cause.message || 'Unable to select advertised address'); } }
   async function retryAdvertising() { try { renderStatus(await admin.retryAdvertising()); } catch (cause) { showError(cause.message || 'Unable to advertise'); } }
    async function signIn() { try { await auth.signInWithJoystick(); } catch (cause) { if (cause.message !== 'authentication cancelled') { showError(cause.message || 'Authentication failed'); } } } async function signOut() { try { await auth.signOut(); } catch (cause) { showError(cause.message || 'Sign out failed'); } }
-   const whisperRuleControls = { followed: 'followed', subscribed: 'subscribed', resubscribed: 'resubscribed', giftSender: 'gift-sender' }; let whisperSettings; let whisperSaveQueue = Promise.resolve();
+    const whisperRuleControls = { followed: 'followed', subscribed: 'subscribed', resubscribed: 'resubscribed', giftSender: 'gift-sender' }; let whisperSettings; let whisperSaveQueue = Promise.resolve();
+    Object.values(whisperRuleControls).forEach((control) => { const message = $('whisper-' + control + '-message'); const label = message?.previousElementSibling; if (!label?.parentNode || typeof label.parentNode.insertBefore !== 'function') return; const heading = document.createElement('div'); heading.className = 'message-field-heading'; label.parentNode.insertBefore(heading, label); heading.append(label, createMessageVariableInfo('whisper')); });
    function renderWhisperSettings(settings) { whisperSettings = settings; Object.entries(whisperRuleControls).forEach(([rule, control]) => { $('whisper-' + control + '-enabled').checked = settings[rule].enabled; $('whisper-' + control + '-message').value = settings[rule].message; }); }
      function getViewerCount(value) { return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 0; }
           function renderWhisperStatus(status) { joystickStreamIsLive = status?.stream?.state === 'live'; const liveIndicator = $('panel-live-indicator'); if (liveIndicator) liveIndicator.classList.toggle('live', currentAuthState === 'authenticated' && joystickStreamIsLive); const viewerCount = getViewerCount(status?.stream?.viewerCount); $('panel-viewer-count').textContent = String(viewerCount); }
@@ -104,17 +146,18 @@ function renderDevices(devices) { $('devices-empty').hidden = devices.length > 0
    Object.values(whisperRuleControls).forEach((control) => { $('whisper-' + control + '-enabled').onchange = saveWhisperSettings; $('whisper-' + control + '-message').onchange = saveWhisperSettings; });
     let receivedWhisperStatus = false; const removeWhisperStatusListener = joystickWhispers.onStatusChanged((status) => { receivedWhisperStatus = true; renderWhisperStatus(status); }); window.addEventListener('pagehide', removeWhisperStatusListener);
     joystickWhispers.getSettings().then(renderWhisperSettings).catch(() => { showError('Unable to load local whisper settings.'); }); joystickWhispers.getStatus().then((status) => { if (!receivedWhisperStatus) renderWhisperStatus(status); }).catch(() => { if (!receivedWhisperStatus) { renderWhisperStatus({ connection: { state: 'unavailable' }, delivery: { state: 'idle' } }); showError('Unable to load Joystick status.'); } });
-   const joystickChatAutomations = window.prismataDesktop.joystickChatAutomations || { getSettings: async () => ({ dropIn: { enabled: false, messages: [] } }), updateSettings: async (settings) => settings }; let dropInChatSettings; let dropInChatSaveQueue = Promise.resolve();
+   const joystickChatAutomations = window.prismataDesktop.joystickChatAutomations || { getSettings: async () => ({ dropIn: { enabled: false, messages: [] }, slashCommands: { prefix: '!', commands: [] } }), updateSettings: async (settings) => settings }; let dropInChatSettings; let slashCommandSettings = { prefix: '!', commands: [] }; let dropInChatSaveQueue = Promise.resolve();
    function currentDropInMessageValues() { return Array.from($('drop-in-message-list').querySelectorAll('textarea')).map((field) => field.value); }
    function renderDropInMessages(messages) {
      const list = $('drop-in-message-list'); list.replaceChildren();
      const values = (messages.length ? messages : ['']).slice(0, 10);
      values.forEach((message, index) => {
-       const row = document.createElement('div'); row.className = 'drop-in-message-row'; row.setAttribute('role', 'listitem');
-       const field = document.createElement('div'); field.className = 'drop-in-message-field';
-        const label = document.createElement('label'); label.className = 'label'; label.htmlFor = 'drop-in-chat-message-' + index; label.textContent = 'Message ' + (index + 1);
-        const textarea = document.createElement('textarea'); textarea.id = label.htmlFor; textarea.rows = 2; textarea.maxLength = 500; textarea.value = message; textarea.setAttribute('aria-label', 'Drop-in chat message ' + (index + 1)); textarea.onchange = saveDropInChatSettings;
-        field.append(label, textarea);
+         const row = document.createElement('div'); row.className = 'drop-in-message-row'; row.setAttribute('role', 'listitem');
+         const field = document.createElement('div'); field.className = 'drop-in-message-field';
+         const label = document.createElement('label'); label.className = 'label'; label.htmlFor = 'drop-in-chat-message-' + index; label.textContent = 'Message ' + (index + 1);
+         const heading = document.createElement('div'); heading.className = 'message-field-heading'; heading.append(label, createMessageVariableInfo('drop-in'));
+         const textarea = document.createElement('textarea'); textarea.id = label.htmlFor; textarea.rows = 2; textarea.maxLength = 500; textarea.value = message; textarea.setAttribute('aria-label', 'Drop-in chat message ' + (index + 1)); textarea.onchange = saveDropInChatSettings;
+         field.append(heading, textarea);
         row.append(field);
         if (index > 0) { const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'secondary'; remove.textContent = 'Remove'; remove.setAttribute('aria-label', 'Remove message ' + (index + 1)); remove.onclick = () => { const next = currentDropInMessageValues(); next.splice(index, 1); renderDropInMessages(next); saveDropInChatSettings(); }; row.append(remove); }
         list.append(row);
@@ -123,15 +166,75 @@ function renderDevices(devices) { $('devices-empty').hidden = devices.length > 0
    }
    function saveDropInChatSettings() {
      if (!dropInChatSettings) return;
-     const next = { dropIn: { enabled: $('drop-in-chat-enabled').checked, messages: currentDropInMessageValues() } };
+     const next = { dropIn: { enabled: $('drop-in-chat-enabled').checked, messages: currentDropInMessageValues() }, slashCommands: slashCommandSettings };
       const snapshot = JSON.parse(JSON.stringify(next));
       dropInChatSaveQueue = dropInChatSaveQueue.then(() => joystickChatAutomations.updateSettings(snapshot)).then((saved) => {
-        dropInChatSettings = saved; $('drop-in-chat-enabled').checked = saved.dropIn.enabled;
+        dropInChatSettings = saved; slashCommandSettings = saved.slashCommands || slashCommandSettings; $('drop-in-chat-enabled').checked = saved.dropIn.enabled;
       }).catch((cause) => { showError(cause.message || 'Unable to save Drop-in chat automation.'); });
    }
    $('drop-in-chat-enabled').onchange = saveDropInChatSettings;
    $('drop-in-message-add').onclick = () => { const messages = currentDropInMessageValues(); if (messages.length >= 10) return; messages.push(''); renderDropInMessages(messages); $('drop-in-message-list').querySelectorAll('textarea')[messages.length - 1].focus(); saveDropInChatSettings(); };
-    joystickChatAutomations.getSettings().then((settings) => { dropInChatSettings = settings; $('drop-in-chat-enabled').checked = settings.dropIn.enabled; renderDropInMessages(settings.dropIn.messages); }).catch(() => { renderDropInMessages([]); showError('Unable to load Drop-in chat automation.'); });
+   function renderSlashCommandList(commands) {
+     const list = $('slash-command-list'); list.replaceChildren();
+     commands.forEach((command, index) => {
+       const row = document.createElement('div'); row.className = 'drop-in-message-row'; row.setAttribute('role', 'listitem');
+       const fields = document.createElement('div'); fields.className = 'drop-in-message-field';
+       const nameLabel = document.createElement('label'); nameLabel.className = 'label'; nameLabel.textContent = 'Command name'; nameLabel.htmlFor = 'slash-command-name-' + index;
+        const nameField = document.createElement('input'); nameField.id = nameLabel.htmlFor; nameField.type = 'text'; nameField.maxLength = 64; nameField.value = command.name; nameField.setAttribute('aria-label', 'Command name ' + (index + 1));
+        const responseLabel = document.createElement('label'); responseLabel.className = 'label'; responseLabel.textContent = 'Public response'; responseLabel.htmlFor = 'slash-command-response-' + index;
+        const responseHeading = document.createElement('div'); responseHeading.className = 'message-field-heading'; responseHeading.append(responseLabel, createMessageVariableInfo('slash-command'));
+        const textarea = document.createElement('textarea'); textarea.id = responseLabel.htmlFor; textarea.rows = 2; textarea.maxLength = 500; const responseField = textarea; responseField.value = command.response; responseField.setAttribute('aria-label', 'Command response ' + (index + 1));
+       nameField.onchange = () => { command.name = nameField.value; saveSlashCommandSettings(); };
+       responseField.onchange = () => { command.response = responseField.value; saveSlashCommandSettings(); };
+        fields.append(nameLabel, nameField, responseHeading, responseField);
+       row.append(fields);
+       const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'secondary'; toggle.setAttribute('role', 'switch'); toggle.setAttribute('aria-checked', String(command.enabled)); toggle.textContent = command.enabled ? 'Enabled' : 'Disabled';
+       toggle.onclick = () => { void toggleSlashCommand(command, toggle); }; row.append(toggle);
+       const removeButton = document.createElement('button'); removeButton.type = 'button'; removeButton.className = 'secondary'; removeButton.textContent = 'Delete'; removeButton.setAttribute('aria-label', 'Delete command ' + (index + 1)); removeButton.onclick = () => removeSlashCommand(index); row.append(removeButton);
+       list.append(row);
+     });
+     $('slash-command-add').disabled = commands.length >= 50;
+     if (!commands.length) { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = 'No slash commands yet.'; list.append(empty); }
+   }
+   function setSlashCommandStatus(message) { $('slash-command-status').textContent = message; }
+   function saveSlashCommandSettings() {
+     if (!dropInChatSettings) return;
+     const prefix = $('slash-command-prefix').value;
+     if (!/^\\p{P}$/u.test(prefix)) { const message = 'Use one punctuation character as the command prefix.'; setSlashCommandStatus(message); showError(message); $('slash-command-prefix').value = slashCommandSettings.prefix; return; }
+     slashCommandSettings = { prefix, commands: slashCommandSettings.commands };
+     const next = { dropIn: { enabled: $('drop-in-chat-enabled').checked, messages: currentDropInMessageValues() }, slashCommands: slashCommandSettings };
+     const snapshot = JSON.parse(JSON.stringify(next));
+     dropInChatSaveQueue = dropInChatSaveQueue.then(() => joystickChatAutomations.updateSettings(snapshot)).then((saved) => {
+       dropInChatSettings = saved; slashCommandSettings = saved.slashCommands || slashCommandSettings; $('slash-command-prefix').value = slashCommandSettings.prefix; renderSlashCommandList(slashCommandSettings.commands); setSlashCommandStatus('');
+     }).catch((cause) => { const message = cause.message || 'Unable to save slash-command settings.'; setSlashCommandStatus(message); showError(message); });
+   }
+   function addSlashCommand() {
+     if (slashCommandSettings.commands.length >= 50) return;
+     const commands = slashCommandSettings.commands.slice();
+     commands.push({ name: '', response: '', enabled: false });
+     slashCommandSettings = { ...slashCommandSettings, commands };
+     renderSlashCommandList(commands);
+     saveSlashCommandSettings();
+   }
+   function toggleSlashCommand(command, toggle) {
+     const enabled = !command.enabled;
+     if (enabled && (!command.name.trim() || !command.response.trim())) { const message = 'Enter a command name and response before enabling it.'; setSlashCommandStatus(message); showError(message); return; }
+     if (enabled && /\s/.test(command.name.trim())) { const message = 'Use a one-token command name.'; setSlashCommandStatus(message); showError(message); return; }
+     command.enabled = enabled;
+     toggle.setAttribute('aria-checked', String(enabled));
+     toggle.textContent = enabled ? 'Enabled' : 'Disabled';
+     saveSlashCommandSettings();
+   }
+   function removeSlashCommand(index) {
+     const commands = slashCommandSettings.commands.slice();
+     commands.splice(index, 1);
+     slashCommandSettings = { ...slashCommandSettings, commands };
+     renderSlashCommandList(commands);
+     saveSlashCommandSettings();
+   }
+   $('slash-command-prefix').onchange = saveSlashCommandSettings;
+   $('slash-command-add').onclick = () => addSlashCommand();
+    joystickChatAutomations.getSettings().then((settings) => { dropInChatSettings = settings; slashCommandSettings = settings.slashCommands || { prefix: '!', commands: [] }; $('drop-in-chat-enabled').checked = settings.dropIn.enabled; $('slash-command-prefix').value = slashCommandSettings.prefix; renderDropInMessages(settings.dropIn.messages); renderSlashCommandList(slashCommandSettings.commands); }).catch(() => { renderDropInMessages([]); renderSlashCommandList([]); showError('Unable to load Drop-in chat automation.'); });
   const directMessage = window.prismataDesktop.directMessage; let directMessageSending = false;
   async function sendDirectMessage() { if (directMessageSending) return; const button = $('direct-message-send'); const status = $('direct-message-status'); directMessageSending = true; button.disabled = true; status.textContent = 'Sending…'; try { await directMessage.send($('direct-message-input').value); status.textContent = ''; $('direct-message-input').value = ''; } catch (cause) { status.textContent = ''; showError(cause.message || 'Unable to send message'); } finally { directMessageSending = false; button.disabled = false; } }
   const directMessageInput = $('direct-message-input'); if (typeof directMessageInput?.addEventListener === 'function') directMessageInput.addEventListener('keydown', (event) => { if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return; event.preventDefault(); void sendDirectMessage(); });
