@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project adheres to Semantic Versioning.
 
+## [0.1.5]
+
+### Added
+- Added the ability to download debug logs to send to the developer.
+
+### Fixed
+- Fixed slash command names containing “s” being rejected as multi-word names.
+- Invalid multi-word command names now show an error and restore the previous name without deleting the command.
+
 ## [0.1.4]
 
 ### Added
