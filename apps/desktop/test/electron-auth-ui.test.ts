@@ -102,7 +102,9 @@ test('desktop shell translates an HTTP 400 token-refresh failure into actionable
 });
 
 test('all desktop error toasts have a dismiss button and auto-dismiss after eight seconds', () => {
-  assert.match(page, /function showError\(message\) \{ if \(errorToastTimer !== undefined\) clearTimeout\(errorToastTimer\); errorMessage\.textContent = message; error\.hidden = false; errorToastTimer = setTimeout\(hideErrorToast, 8000\); \}/);
+  assert.match(page, /function showError\(message\) \{/);
+  assert.match(page, /errorMessage\.textContent = message; error\.hidden = false; errorToastTimer = setTimeout\(hideErrorToast, 8000\)/);
+  assert.match(page, /function displayError\(message, context, reportMessage = message\)[\s\S]*else reportRendererError\(reportMessage\)/);
   assert.match(page, /\$\('desktop-error-dismiss'\)\.onclick = hideErrorToast/);
   assert.match(page, /function hideErrorToast\(\) \{ if \(errorToastTimer !== undefined\) \{ clearTimeout\(errorToastTimer\); errorToastTimer = undefined; \} error\.hidden = true; errorMessage\.textContent = ''; \}/);
 });

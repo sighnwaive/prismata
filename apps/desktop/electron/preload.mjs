@@ -1,5 +1,65 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+const supportLogInputFieldsByOperation = {
+  'auth.sign-in': [],
+  'auth.sign-out': [],
+  'admin.set-lan-enabled': [],
+  'admin.set-advertised-address': [],
+  'joystick-whispers.save-settings': ['whisper-message'],
+  'joystick-chat-automations.save-drop-in': ['drop-in-message'],
+  'joystick-chat-automations.save-slash-command': ['slash-command-response'],
+  'todos.save': ['todo-note'],
+  'reminders.save': ['reminder-message'],
+};
+const supportLogAppStates = new Set([
+  'offline', 'signed-out', 'opening-browser', 'waiting-for-callback',
+  'authenticated', 'failure', 'enabled', 'disabled',
+]);
+function redactSupportLogSecrets(value) {
+  return value
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, 'Bearer [REDACTED]')
+    .replace(/\b(authorization|authorization[_-]?(?:code|state)|access[_-]?token|refresh[_-]?token|id[_-]?token|token|client[_-]?secret|password|oauth[_-]?(?:code|state)|auth[_-]?(?:code|state)|pairing[_-]?code|code[_-]?verifier|verifier|credentials?|code|state)\b(\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi, '$1$2[REDACTED]')
+    .replace(/([?&](?:access[_-]?token|refresh[_-]?token|id[_-]?token|token|client[_-]?secret|password|oauth[_-]?code|oauth[_-]?state|auth[_-]?code|auth[_-]?state|pairing[_-]?code|code[_-]?verifier|verifier|credentials?|code|state)=)[^&#\s]*/gi, '$1[REDACTED]');
+}
+function sanitizeSupportLogContext(input) {
+  try {
+    if (!input || typeof input !== 'object' || Array.isArray(input)
+      || typeof input.operation !== 'string'
+      || !Object.prototype.hasOwnProperty.call(supportLogInputFieldsByOperation, input.operation)) return undefined;
+    const context = { operation: input.operation };
+    const errorName = typeof input.errorName === 'string'
+      ? redactSupportLogSecrets(input.errorName.slice(0, 128)).slice(0, 64)
+      : '';
+    const errorCode = typeof input.errorCode === 'string'
+      ? redactSupportLogSecrets(input.errorCode.slice(0, 128)).slice(0, 64)
+      : '';
+    if (/^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(errorName)) context.errorName = errorName;
+    if (/^[A-Za-z0-9_.-]{1,64}$/.test(errorCode)) context.errorCode = errorCode;
+    if (supportLogAppStates.has(input.appState)) context.appState = input.appState;
+    const fields = supportLogInputFieldsByOperation[input.operation];
+    if (fields.includes(input.inputField) && typeof input.inputValue === 'string') {
+      context.inputField = input.inputField;
+      context.inputValue = redactSupportLogSecrets(input.inputValue.slice(0, 4_000)).slice(0, 2_000);
+    }
+    return context;
+  } catch {
+    return undefined;
+  }
+}
+function sanitizeSupportLogReport(report) {
+  if (!report || typeof report !== 'object' || Array.isArray(report)) {
+    return { source: 'renderer', message: 'Renderer application error' };
+  }
+  const safeReport = {
+    source: 'renderer',
+    message: typeof report.message === 'string' ? report.message : 'Renderer application error',
+  };
+  if (typeof report.stack === 'string') safeReport.stack = report.stack;
+  const context = sanitizeSupportLogContext(report.context);
+  if (context) safeReport.context = context;
+  return safeReport;
+}
+
 contextBridge.exposeInMainWorld('prismataDesktop', {
   auth: {
     getSnapshot: () => ipcRenderer.invoke('auth:getSnapshot'),
@@ -78,5 +138,9 @@ contextBridge.exposeInMainWorld('prismataDesktop', {
   joystickChatAutomations: {
     getSettings: () => ipcRenderer.invoke('joystick-chat-automations:get-settings'),
     updateSettings: (settings) => ipcRenderer.invoke('joystick-chat-automations:update-settings', settings),
+  },
+  supportLogs: {
+    reportError: (report) => ipcRenderer.invoke('support-logs:report-error', sanitizeSupportLogReport(report)),
+    exportLogs: () => ipcRenderer.invoke('support-logs:export'),
   },
 });

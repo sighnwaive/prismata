@@ -45,6 +45,28 @@ test('Command enable and disable controls persist state and reject incomplete dr
   assert.ok(contract, 'the switch must persist both states and prevent enabling an incomplete command');
 });
 
+test('one-token validation in the rendered page checks whitespace, not the letter s', () => {
+  const page = commandEditorPage();
+
+  assert.ok(
+    page.includes("if (enabled && /\\s/.test(command.name.trim()))"),
+    'the generated inline script must preserve the whitespace regex escape',
+  );
+});
+
+test('invalid multi-token names show an error and revert the field without saving or removing the command', () => {
+  const page = commandEditorPage();
+  const handler = page.match(/nameField\.onchange\s*=\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*responseField\.onchange/)?.[1] ?? '';
+
+  assert.ok(handler.includes("if (/\\s/.test(nameField.value.trim()))"), 'the change handler rejects internal whitespace');
+  assert.ok(handler.includes('nameField.value = command.name;'), 'invalid input reverts to the previous command name');
+  assert.ok(handler.includes('setSlashCommandStatus(message);') && handler.includes('showError(message);'),
+    'invalid input is reported in the status and error UI');
+  assert.ok(handler.includes('return;'), 'invalid input exits before persistence');
+  assert.ok(handler.indexOf('return;') < handler.indexOf('command.name = nameField.value;'),
+    'the invalid value is not assigned to the command model');
+});
+
 test('Delete command removes the selected entry and persists the remaining list', () => {
   const page = commandEditorPage();
   const contract = /function removeSlashCommand\(index\)/.test(page)

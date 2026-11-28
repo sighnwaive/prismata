@@ -21,7 +21,59 @@ if (app.isPackaged) {
 }
 await import('tsx/esm');
 
+let supportLogService;
+const pendingSupportLogWrites = new Set();
+
+function persistSupportError(report) {
+  if (!supportLogService) return Promise.resolve();
+  const pending = supportLogService.reportError(report);
+  pendingSupportLogWrites.add(pending);
+  void pending.then(
+    () => pendingSupportLogWrites.delete(pending),
+    () => pendingSupportLogWrites.delete(pending),
+  );
+  return pending;
+}
+
+function reportMainError(error) {
+  try {
+    const isError = error instanceof Error;
+    const message = isError ? error.message : typeof error === 'string' ? error : 'Unhandled non-Error rejection';
+    return persistSupportError({
+      source: 'main',
+      message,
+      ...(isError && error.stack ? { stack: error.stack } : {}),
+    });
+  } catch {
+    return Promise.resolve();
+  }
+}
+
+async function drainSupportLogWrites() {
+  while (pendingSupportLogWrites.size > 0) {
+    await Promise.allSettled([...pendingSupportLogWrites]);
+  }
+}
+
+const { createSupportLogService, sanitizeSupportLogContext } = await import('../src/support-log.ts');
+supportLogService = createSupportLogService({
+  userDataPath: app.getPath('userData'),
+  downloadsPath: app.getPath('downloads'),
+});
+
+function quitAfterMainError(error) {
+  process.exitCode = 1;
+  void reportMainError(error)
+    .catch(() => {})
+    .then(drainSupportLogWrites)
+    .then(() => app.quit());
+}
+
+process.on('uncaughtException', quitAfterMainError);
+process.on('unhandledRejection', quitAfterMainError);
+
 function developmentLog(method, ...args) {
+  if (method === 'error') void reportMainError(args[0]).catch(() => {});
   if (app.isPackaged) return;
   console[method](...args);
 }
@@ -243,9 +295,27 @@ function wireIpc() {
     try {
       await activeAuth.signOut();
     } catch (error) {
+      void reportMainError(error).catch(() => {});
       if (!activeAuth?.getSession()) notifyAuthStateListeners();
       throw error;
     }
+  });
+  handle('support-logs:report-error', async (event, report) => {
+    if (event.sender !== activeWindow?.webContents) throw new Error('Support logs are unavailable to this renderer');
+    if (!report || typeof report !== 'object' || Array.isArray(report) || typeof report.message !== 'string') {
+      throw new Error('Invalid renderer error report');
+    }
+    const context = sanitizeSupportLogContext(report.context);
+    await persistSupportError({
+      source: 'renderer',
+      message: report.message,
+      ...(typeof report.stack === 'string' ? { stack: report.stack } : {}),
+      ...(context ? { context } : {}),
+    });
+  });
+  handle('support-logs:export', (event) => {
+    if (event.sender !== activeWindow?.webContents) throw new Error('Support logs are unavailable to this renderer');
+    return supportLogService.exportLogs();
   });
   ipcMain.handle('reminder:get', async () => getReminderSettings(await activeLifecycle?.getSettings()));
   registeredIpcHandlers.add('reminder:get');
@@ -430,6 +500,7 @@ async function createWindow() {
     await activeLifecycle.start();
     resolveLifecycleReady();
   } catch (error) {
+    void reportMainError(error).catch(() => {});
     rejectLifecycleReady(error);
     throw error;
   }
@@ -468,7 +539,7 @@ app.whenReady().then(async () => {
   });
 }).catch((error) => {
   developmentLog('error', error);
-  process.exit(1);
+  void drainSupportLogWrites().then(() => process.exit(1));
 });
 
 app.on('window-all-closed', () => {
@@ -484,6 +555,7 @@ app.on('before-quit', (event) => {
   quitting = true;
   if (joystickEventPruneTimer) clearInterval(joystickEventPruneTimer);
   void shutdownRuntime().then(async () => {
+    await drainSupportLogWrites();
     try {
       await joystickEventLogger?.flush();
     } catch {

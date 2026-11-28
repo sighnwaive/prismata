@@ -6,6 +6,7 @@ import type { JoystickChatAutomationSettings } from '../src/joystick-chat-automa
 import type { JoystickWhisperStatus } from './joystick-whisper-runtime.js';
 import type { TipHistoryRecord, TodoRecord } from '../src/local-store.js';
 import type { JoystickChatMessage } from '../src/joystick-chat-feed.js';
+import type { SupportLogContext } from '../src/support-log.js';
 
 export type DesktopAuthPreloadApi = {
   getSnapshot: () => Promise<DesktopAuthSnapshot>;
@@ -48,6 +49,18 @@ export type JoystickChatPreloadApi = {
   onListChanged: (listener: (messages: JoystickChatMessage[]) => void) => () => void;
 };
 
+export type SupportLogErrorReport = {
+  source: 'renderer';
+  message: string;
+  stack?: string;
+  context?: SupportLogContext;
+};
+
+export type SupportLogsPreloadApi = {
+  reportError: (report: SupportLogErrorReport) => Promise<void>;
+  exportLogs: () => Promise<void>;
+};
+
 export type DesktopPreloadApi = {
   auth: DesktopAuthPreloadApi;
   admin: DesktopAdminPreloadApi;
@@ -58,6 +71,7 @@ export type DesktopPreloadApi = {
   directMessage: DirectMessagePreloadApi;
   joystickWhispers: JoystickWhisperPreloadApi;
   joystickChatAutomations: JoystickChatAutomationPreloadApi;
+  supportLogs: SupportLogsPreloadApi;
 };
 
 export type DirectMessagePreloadApi = { send: (text: string) => Promise<{ ok: true }> };
@@ -145,6 +159,12 @@ export function createJoystickChatPreloadApi(input: JoystickChatPreloadApi): Joy
 
 export function createJoystickWhisperPreloadApi(input: JoystickWhisperPreloadApi): JoystickWhisperPreloadApi { return input; }
 export function createJoystickChatAutomationPreloadApi(input: JoystickChatAutomationPreloadApi): JoystickChatAutomationPreloadApi { return input; }
+export function createSupportLogsPreloadApi(input: SupportLogsPreloadApi): SupportLogsPreloadApi {
+  return {
+    reportError: (report) => input.reportError(report),
+    exportLogs: () => input.exportLogs(),
+  };
+}
 
 export function createAuthPreloadApi(input: DesktopAuthPreloadApi): DesktopAuthPreloadApi {
   return input;
